@@ -186,7 +186,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     {
         uint8_t st = analog_read(areg_wakeup_status);
         if ((st & PM_WAKEUP_COMPARATOR) && timer_wakeup) {
-            while ((reg_system_tick - wake_ticks) > (0x80u << 23)) {
+            while ((reg_system_tick - wake_ticks) > BIT(30)) {
             }
         }
         irq_restore(irq);

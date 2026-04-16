@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "include/register.h"
 #include "include/clock.h"
+#include "include/timer.h"
 #include "include/irq.h"
 #include "include/pm.h"
 #include "include/analog.h"
@@ -62,10 +63,6 @@ extern uint32_t __udivsi3(uint32_t a, uint32_t b);
 
 __attribute__((used, noinline, section(".text.irq_disable"))) static unsigned char irq_disable_pm(void) {
     return irq_disable();
-}
-
-static uint32_t __attribute__((noinline, section(".text.clock_time"))) clock_time(void) {
-    return reg_system_tick;
 }
 
 void __attribute__((section(".text.pm_set_wakeup_time_param"))) pm_set_wakeup_time_param(uint32_t us) {
@@ -200,7 +197,7 @@ void __attribute__((section(".text.pm_wait_xtal_ready"))) pm_wait_xtal_ready(voi
         uint32_t start = clock_time();
         for (volatile uint32_t j = 0; j <= 0x3bu; ++j) {
         }
-        if ((clock_time() - start) > 320u) {
+        if (clock_time_exceed(start, 20u)) {
             if (i == g_pm_xtal_stable_loopnum) {
                 start_reboot();
             }

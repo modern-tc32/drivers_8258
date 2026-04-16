@@ -148,7 +148,7 @@ int  aes_dma_encrypt(unsigned char *Key,unsigned int *Data,unsigned short DataSi
 		reg_aes_key(i) = Key[i];  //set the key
 	}
 
-	reg_dma_chn_en|=0x30;//enable aes dma channel
+	reg_dma_chn_en |= (FLD_DMA_CHN_AES_IN | FLD_DMA_CHN_AES_OUT);//enable aes dma channel
 	reg_dma_tx_rdy0|=(FLD_DMA_CHN_AES_IN|FLD_DMA_CHN_AES_OUT);
 
 	while(reg_dma_tx_rdy0 & FLD_DMA_CHN_AES_OUT);  //wait dma done
@@ -186,10 +186,9 @@ int aes_dma_decrypt(unsigned char *Key,unsigned int *Data,unsigned short DataSiz
 		reg_aes_key(i) = Key[i];  //set the key
 	}
 
-	reg_dma_chn_en|=0x30;//enable aes dma channel
+	reg_dma_chn_en |= (FLD_DMA_CHN_AES_IN | FLD_DMA_CHN_AES_OUT);//enable aes dma channel
 	reg_dma_tx_rdy0|=(FLD_DMA_CHN_AES_IN|FLD_DMA_CHN_AES_OUT);
 
 	while(reg_dma_tx_rdy0 & FLD_DMA_CHN_AES_OUT);  //wait dma done
 	return 0;
 }
-

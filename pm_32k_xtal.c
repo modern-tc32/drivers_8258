@@ -162,7 +162,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
         r = analog_read(SYS_DEEP_ANA_REG);
         analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r & 0xfdu));
         soft_reboot_dly13ms_use24mRC();
-        reg_pwdn_ctrl = 0x20;
+        reg_pwdn_ctrl = FLD_PWDN_CTRL_REBOOT;
     }
 
     {
@@ -187,7 +187,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     reg_system_tick_mode = 0x92;
     for (volatile int i = 0; i < 4; ++i) {
     }
-    reg_system_tick_ctrl = 1;
+    reg_system_tick_ctrl = FLD_SYSTEM_TICK_START;
     pm_wait_xtal_ready();
 
     reg_clk_sel = bak66;
@@ -350,7 +350,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
         r = analog_read(SYS_DEEP_ANA_REG);
         analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r & 0xfdu));
         soft_reboot_dly13ms_use24mRC();
-        reg_pwdn_ctrl = 0x20;
+        reg_pwdn_ctrl = FLD_PWDN_CTRL_REBOOT;
     }
 
     {
@@ -375,7 +375,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
     reg_system_tick_mode = 0x90;
     for (volatile int i = 0; i < 4; ++i) {
     }
-    reg_system_tick_ctrl = 1;
+    reg_system_tick_ctrl = FLD_SYSTEM_TICK_START;
     pm_wait_xtal_ready();
 
     reg_clk_sel = bak66;

@@ -144,7 +144,7 @@ void __attribute__((section(".ram_code"))) sleep_start(void) {
     reg_gpio_func_sel_pe = 0;
     analog_write(areg_clk_setting, 0x0c);
 
-    volatile uint8_t idx = reg_ret_slot_idx;
+    uint8_t idx = reg_ret_slot_idx;
     volatile uint32_t *p = (volatile uint32_t *)(uintptr_t)(PM_RET_ENTRY_BASE + ((uint32_t)idx << 8));
     uint32_t old = *p;
     *p = 0x06c006c0u;

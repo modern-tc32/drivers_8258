@@ -35,7 +35,7 @@ void efuse_sys_check(uint32_t v) {
     if ((v & 0xC0u) == 0xC0u) {
         need_erase = 1;
         if (sp_sel_1 <= 1u) {
-            need_erase = (uint32_t)(((int32_t)(v << 23)) >> 31);
+            need_erase = (uint32_t)(((uint32_t)(v << 23)) >> 31);
         }
     }
 

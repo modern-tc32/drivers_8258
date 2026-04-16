@@ -41,8 +41,8 @@ const RF_PowerTypeDef rf_power_Level_list[60] = {
 };
 
 volatile uint16_t g_RFMode;
-volatile uint8_t g_RFRxPingpongEn;
-volatile uint8_t RF_TRxState;
+static volatile uint8_t g_RFRxPingpongEn;
+static volatile uint8_t RF_TRxState;
 
 enum {
     FLD_RF_TRX_CTRL_TX = BIT(4),     /* reg_rf_ll_ctrl_0 */

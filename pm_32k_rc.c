@@ -169,7 +169,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         } else {
             tick_cur += ((t32 - tick_32k_cur) * (uint32_t)tick_32k_calib) >> 4;
         }
-        tick_32k_cur = tick_cur + 0x140u;
+        tick_32k_cur = tick_cur + 20 * SYSTEM_TIMER_TICK_1US;
     }
 
     reg_system_tick_mode = 0;
@@ -193,13 +193,11 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
 
 
 __attribute__((used, section(".text.pm_tim_recover_32k_rc"))) unsigned int pm_tim_recover_32k_rc(unsigned int tick_32k_now) {
-    uint32_t deep_ret_tick;
     if (pm_long_suspend) {
-        deep_ret_tick = tick_cur + ((uint32_t)(tick_32k_now - tick_32k_cur) / 16u) * (uint32_t)tick_32k_calib;
+        return tick_cur + ((uint32_t)(tick_32k_now - tick_32k_cur) / 16u) * (uint32_t)tick_32k_calib;
     } else {
-        deep_ret_tick = tick_cur + ((uint32_t)(tick_32k_now - tick_32k_cur) * (uint32_t)tick_32k_calib) / 16u;
+        return tick_cur + ((uint32_t)(tick_32k_now - tick_32k_cur) * (uint32_t)tick_32k_calib) / 16u;
     }
-    return deep_ret_tick;
 }
 
 __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_wakeup(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int sleep_duration_us) {
@@ -329,7 +327,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
         } else {
             tick_cur += (uint32_t)(((t32 - tick_32k_cur) * (uint32_t)tick_32k_calib) >> 4);
         }
-        tick_32k_cur = tick_cur + 0x140u;
+        tick_32k_cur = tick_cur + 20 * SYSTEM_TIMER_TICK_1US;
     }
 
     reg_system_tick_mode = 0x00;

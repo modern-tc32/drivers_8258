@@ -371,4 +371,5 @@ void soft_reboot_dly13ms_use24mRC(void);
  */
 void pm_wait_xtal_ready(void);
 
+#define SYSTEM_TIMER_TICK_1US 	            16
 

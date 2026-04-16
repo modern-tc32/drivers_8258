@@ -151,21 +151,17 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
         reg_pwdn_ctrl = FLD_PWDN_CTRL_REBOOT;
     }
 
-    {
-        uint32_t t32 = pm_get_32k_tick();
-        uint32_t d = t32 - tick_32k_cur;
-        if (pm_long_suspend) {
-            d >>= 5;
-            {
-                uint32_t t = ((d << 5) - d);
-                tick_cur += (((t << 6) - t) << 3) + d;
-            }
-        } else {
-            uint32_t t = ((d << 5) - d);
-            tick_cur += ((((t << 6) - t) << 3) + d) >> 5;
-        }
-        tick_32k_cur = tick_cur + 0x140u;
-    }
+	unsigned int now_tick_32k = pm_get_32k_tick();
+	{
+		if(pm_long_suspend){
+			tick_cur += (unsigned int)(now_tick_32k - tick_32k_cur) / 32 * CRYSTAL32768_TICK_PER_32CYCLE;
+		}
+		else{
+			tick_cur += (unsigned int)(now_tick_32k - tick_32k_cur) * CRYSTAL32768_TICK_PER_32CYCLE / 32;		// current clock
+		}
+	}
+
+	tick_32k_cur = tick_cur + 20 * SYSTEM_TIMER_TICK_1US;
 
     reg_system_tick_mode = 0;
     CLOCK_DLY_7_CYC;
@@ -338,7 +334,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
             uint32_t t = ((d << 5) - d);
             tick_cur += ((((t << 6) - t) << 3) + d) >> 5;
         }
-        tick_32k_cur = tick_cur + 0x140u;
+        tick_32k_cur = tick_cur + 20 * 16;
     }
 
     reg_system_tick_mode = 0x00;

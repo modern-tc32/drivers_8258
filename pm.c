@@ -354,7 +354,7 @@ void __attribute__((section(".text.cpu_wakeup_init"))) cpu_wakeup_init(void) {
         tick_cur = t;
         reg_system_tick_mode = 0;
         reg_system_tick_mode = 0x92;
-        reg_system_tick_ctrl = pmParam.mcu_status;
+        reg_system_tick_ctrl = FLD_SYSTEM_TICK_START;
         pm_wait_xtal_ready();
     } else {
         reg_system_tick_ctrl = FLD_SYSTEM_TICK_START;

@@ -141,7 +141,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
             wake_tick = target - __udivsi3((d << 5) + 0x1e84u, 0x3d09u) + tick_32k_cur;
         }
         reg_system_tick_mode = 0x2c;
-        (*(volatile uint32_t *)(uintptr_t)0x00800754) = wake_tick;
+        REG_ADDR32(0x754) = wake_tick;
         reg_system_tick_ctrl = 0x08;
         CLOCK_DLY_10_CYC;
         CLOCK_DLY_6_CYC;
@@ -327,7 +327,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
         }
 
         reg_system_tick_mode = 0x2c;
-        (*(volatile uint32_t *)(uintptr_t)0x00800754) = wake_tick;
+        REG_ADDR32(0x754) = wake_tick;
         reg_system_tick_ctrl = 0x08;
         CLOCK_DLY_10_CYC;
         CLOCK_DLY_6_CYC;

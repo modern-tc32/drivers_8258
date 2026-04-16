@@ -160,7 +160,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         }
 
         reg_system_tick_mode = 0x2c;
-        (*(volatile uint32_t *)(uintptr_t)0x00800754) = wake_tick;
+        REG_ADDR32(0x754) = wake_tick;
         reg_system_tick_ctrl = 0x08;
         CLOCK_DLY_10_CYC;
         CLOCK_DLY_6_CYC;
@@ -230,7 +230,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     reg_irq_en = 0;
     uint8_t sm = sleep_mode;
     uint32_t start_tick = reg_system_tick;
-    uint16_t calib = (*(volatile uint16_t *)(uintptr_t)0x00800750);
+    uint16_t calib = REG_ADDR16(0x750);
     tick_32k_calib = calib;
     uint8_t has_timer = (uint8_t)(wakeup_src & 0x40u);
 
@@ -334,7 +334,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
         }
 
         reg_system_tick_mode = 0x2c;
-        (*(volatile uint32_t *)(uintptr_t)0x00800754) = wake_tick;
+        REG_ADDR32(0x754) = wake_tick;
         reg_system_tick_ctrl = 0x08;
         CLOCK_DLY_10_CYC;
         CLOCK_DLY_6_CYC;

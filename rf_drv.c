@@ -44,6 +44,13 @@ volatile uint16_t g_RFMode;
 volatile uint8_t g_RFRxPingpongEn;
 volatile uint8_t RF_TRxState;
 
+enum {
+    FLD_RF_TRX_CTRL_TX = BIT(4),     /* reg_rf_ll_ctrl_0 */
+    FLD_RF_TRX_CTRL_RX = BIT(5),     /* reg_rf_ll_ctrl_0 */
+    FLD_RF_TRX_CTRL_CMD0 = BIT(0),   /* reg_rf_ll_ctrl_0 */
+    FLD_RF_MODE_RX_EN = BIT(0),      /* reg 0x428 */
+};
+
 void rf_drv_init(RF_ModeTypeDef rf_mode) {
     LoadTblCmdSet(tbl_rf_init, 5);
     if (rf_mode == RF_MODE_BLE_1M) {
@@ -123,15 +130,15 @@ int rf_trx_state_set(RF_StatusTypeDef state, signed char chn) {
     rf_set_channel(chn, 0);
 
     if (state == RF_MODE_TX) {
-        reg_rf_ll_ctrl_0 = RF_TRX_OFF | BIT(4);
+        rf_set_txmode();
         REG_ADDR8(0x428) &= (uint8_t)~BIT(0);
         RF_TRxState = state;
         return 0;
     }
 
     if (state == RF_MODE_RX) {
-        reg_rf_ll_ctrl_0 = RF_TRX_OFF | BIT(5);
-        REG_ADDR8(0x428) |= BIT(0);
+        reg_rf_ll_ctrl_0 = RF_TRX_OFF | FLD_RF_TRX_CTRL_RX;
+        REG_ADDR8(0x428) |= FLD_RF_MODE_RX_EN;
         RF_TRxState = state;
         return 0;
     }
@@ -150,8 +157,8 @@ int rf_trx_state_set(RF_StatusTypeDef state, signed char chn) {
 
     STOP_RF_STATE_MACHINE;
     reg_rf_ll_ctrl_3 = 0x29;
-    REG_ADDR8(0x428) &= (uint8_t)~BIT(0);
-    reg_rf_ll_ctrl_0 &= (uint8_t)~(BIT(0) | BIT(4) | BIT(5));
+    REG_ADDR8(0x428) &= (uint8_t)~FLD_RF_MODE_RX_EN;
+    reg_rf_ll_ctrl_0 &= (uint8_t)~(FLD_RF_TRX_CTRL_CMD0 | FLD_RF_TRX_CTRL_TX | FLD_RF_TRX_CTRL_RX);
     RF_TRxState = state;
     return 0;
 }

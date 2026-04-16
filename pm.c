@@ -275,7 +275,7 @@ unsigned int __attribute__((section(".text.cpu_stall"))) cpu_stall(int wakeup_sr
 
     (void)reg_pm_misc_dummy;
     reg_tmr_sta = FLD_TMR_STA_TMR1;
-    reg_rf_irq_status = 0xffffu;
+    CLEAR_ALL_RFIRQ_STATUS;
     return reg_pm_misc_dummy;
 }
 

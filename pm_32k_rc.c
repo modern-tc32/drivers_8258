@@ -30,7 +30,8 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         }
 
         /* Intentional: use struct fields (not byte-wise loads). Keep as-is. */
-        uint32_t ew = ((uint32_t)g_pm_early_wakeup_time_us.min << 4);
+        uint16_t min_wakeup_us = g_pm_early_wakeup_time_us.min;
+        uint32_t ew = ((uint32_t)min_wakeup_us << 4);
 
         if (dt >= ew) {
             if (dt > (0xffu << 20)) {
@@ -48,7 +49,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     }
 
     if (func_before_suspend != 0) {
-        if (((int (*)(void))func_before_suspend)() == 0) {
+        if (func_before_suspend() == 0) {
             reg_irq_en = irq;
             return 8;
         }
@@ -58,7 +59,9 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     tick_32k_cur = pm_get_32k_tick();
 
     /* Intentional: use struct fields for early-wakeup timings. */
-    uint16_t early = sleep_mode_u8 ? g_pm_early_wakeup_time_us.deep_ret : g_pm_early_wakeup_time_us.suspend;
+    uint16_t suspend_early_wakeup_us = g_pm_early_wakeup_time_us.suspend;
+    uint16_t deep_ret_early_wakeup_us = g_pm_early_wakeup_time_us.deep_ret;
+    uint16_t early = sleep_mode_u8 ? deep_ret_early_wakeup_us : suspend_early_wakeup_us;
     uint32_t target = wake_ticks - ((uint32_t)early << 4);
 
     analog_write(0x26, wakeup_src_u8);
@@ -122,7 +125,8 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         }
 
         {
-            uint32_t p = ((uint32_t)g_pm_r_delay_us.suspend_ret_r_delay_us << 7) + half;
+            uint16_t suspend_ret_delay_us = g_pm_r_delay_us.suspend_ret_r_delay_us;
+            uint32_t p = ((uint32_t)suspend_ret_delay_us << 7) + half;
             analog_write(0x1f, (uint8_t)__divsi3(p, (uint32_t)tick_32k_calib));
         }
     }
@@ -224,7 +228,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
 
     pm_long_suspend = 0;
     if (func_before_suspend != 0) {
-        if (((int (*)(void))func_before_suspend)() == 0) {
+        if (func_before_suspend() == 0) {
             reg_irq_en = irq;
             return 8;
         }
@@ -286,7 +290,8 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
         analog_write(0x20, (uint8_t)(0x7fu - (uint8_t)__divsi3(0xfa00u + half_calib, (uint32_t)tick_32k_calib)));
 
         {
-            uint32_t t = ((uint32_t)g_pm_r_delay_us.suspend_ret_r_delay_us << 7) + half_calib;
+            uint16_t suspend_ret_delay_us = g_pm_r_delay_us.suspend_ret_r_delay_us;
+            uint32_t t = ((uint32_t)suspend_ret_delay_us << 7) + half_calib;
             analog_write(0x1f, (uint8_t)__divsi3(t, (uint32_t)tick_32k_calib));
         }
     }

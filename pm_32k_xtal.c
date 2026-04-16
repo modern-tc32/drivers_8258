@@ -32,7 +32,8 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
             return (int)(analog_read(0x44) & 0x0fu);
         }
 
-        if (dt >= ((uint32_t)g_pm_early_wakeup_time_us.min << 4)) {
+        uint16_t min_wakeup_us = g_pm_early_wakeup_time_us.min;
+        if (dt >= ((uint32_t)min_wakeup_us << 4)) {
             if (dt > 0x07feffffu) {
                 pm_long_suspend = 1;
             } else {
@@ -48,7 +49,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     }
 
     if (func_before_suspend != 0) {
-        if (((int (*)(void))func_before_suspend)() == 0) {
+        if (func_before_suspend() == 0) {
             reg_irq_en = irq;
             return 8;
         }
@@ -57,11 +58,13 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     tick_cur = reg_system_tick + (0x8cu << 2);
     tick_32k_cur = pm_get_32k_tick();
 
+    uint16_t suspend_early_wakeup_us = g_pm_early_wakeup_time_us.suspend;
+    uint16_t deep_early_wakeup_us = g_pm_early_wakeup_time_us.deep;
     uint32_t target;
     if (sleep_mode == DEEPSLEEP_MODE) {
-        target = wakeup_tick - ((uint32_t)g_pm_early_wakeup_time_us.deep << 4);
+        target = wakeup_tick - ((uint32_t)deep_early_wakeup_us << 4);
     } else {
-        target = wakeup_tick - ((uint32_t)g_pm_early_wakeup_time_us.suspend << 4);
+        target = wakeup_tick - ((uint32_t)suspend_early_wakeup_us << 4);
     }
 
     analog_write(0x26, (uint8_t)wakeup_src);
@@ -112,7 +115,8 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
 
     analog_write(0x20, 0x77);
     {
-        analog_write(0x1f, (uint8_t)__divsi3((((uint32_t)g_pm_r_delay_us.suspend_ret_r_delay_us << 8) + XTAL_CALIB_OFFSET), XTAL_CALIB_SCALE));
+        uint16_t suspend_ret_delay_us = g_pm_r_delay_us.suspend_ret_r_delay_us;
+        analog_write(0x1f, (uint8_t)__divsi3((((uint32_t)suspend_ret_delay_us << 8) + XTAL_CALIB_OFFSET), XTAL_CALIB_SCALE));
     }
 
     {
@@ -221,7 +225,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
 
     pm_long_suspend = 0;
     if (func_before_suspend != 0) {
-        if (((int (*)(void))func_before_suspend)() == 0) {
+        if (func_before_suspend() == 0) {
             reg_irq_en = irq;
             return 8;
         }
@@ -295,8 +299,8 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
 
     analog_write(0x20, 0x77);
     {
-        uint32_t t = ((uint32_t)g_pm_r_delay_us.suspend_ret_r_delay_us << 8) + XTAL_CALIB_OFFSET;
-        analog_write(0x1f, (uint8_t)__divsi3(t, XTAL_CALIB_SCALE));
+        uint16_t suspend_ret_delay_us = g_pm_r_delay_us.suspend_ret_r_delay_us;
+        analog_write(0x1f, (uint8_t)__divsi3((((uint32_t)suspend_ret_delay_us << 8) + XTAL_CALIB_OFFSET), XTAL_CALIB_SCALE));
     }
 
     {

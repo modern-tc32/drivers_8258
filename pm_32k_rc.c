@@ -136,7 +136,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     {
         uint32_t wake_tick;
         uint32_t d = target - tick_cur;
-        if (pm_long_suspend != 0) {
+        if (pm_long_suspend) {
             wake_tick = target - (__udivsi3(d, (uint32_t)tick_32k_calib) << 4) + tick_32k_cur;
         } else {
             wake_tick = target - __udivsi3((d << 4) + (uint32_t)(calib >> 1), (uint32_t)tick_32k_calib) + tick_32k_cur;
@@ -164,7 +164,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
 
     {
         uint32_t t32 = pm_get_32k_tick();
-        if (pm_long_suspend != 0) {
+        if (pm_long_suspend) {
             tick_cur += ((t32 - tick_32k_cur) >> 4) * (uint32_t)tick_32k_calib;
         } else {
             tick_cur += ((t32 - tick_32k_cur) * (uint32_t)tick_32k_calib) >> 4;
@@ -187,24 +187,19 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
             }
         }
         reg_irq_en = irq;
-        if (st == 0) {
-            return STATUS_GPIO_ERR_NO_ENTER_PM;
-        }
-        return (int)(st | STATUS_ENTER_SUSPEND);
+        return st ? (int)(st | STATUS_ENTER_SUSPEND) : STATUS_GPIO_ERR_NO_ENTER_PM;
     }
 }
 
 
 __attribute__((used, section(".text.pm_tim_recover_32k_rc"))) unsigned int pm_tim_recover_32k_rc(unsigned int tick_32k_now) {
+    uint32_t deep_ret_tick;
     if (pm_long_suspend) {
-        uint32_t t = tick_32k_now - tick_32k_cur;
-        t = (t >> 4) * (uint32_t)tick_32k_calib;
-        return t + tick_cur;
+        deep_ret_tick = tick_cur + ((uint32_t)(tick_32k_now - tick_32k_cur) / 16u) * (uint32_t)tick_32k_calib;
     } else {
-        uint32_t t = tick_32k_now - tick_32k_cur;
-        t = (t * (uint32_t)tick_32k_calib) >> 4;
-        return t + tick_cur;
+        deep_ret_tick = tick_cur + ((uint32_t)(tick_32k_now - tick_32k_cur) * (uint32_t)tick_32k_calib) / 16u;
     }
+    return deep_ret_tick;
 }
 
 __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_wakeup(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int sleep_duration_us) {
@@ -299,7 +294,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     {
         uint32_t wake_tick;
         uint32_t dt = reg_system_tick - start_tick;
-        if (pm_long_suspend != 0) {
+        if (pm_long_suspend) {
             uint32_t base = minus64 + tick_cur;
             uint32_t q = __udivsi3(dt, (uint32_t)tick_32k_calib);
             wake_tick = base - (q << 4);
@@ -329,7 +324,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
 
     {
         uint32_t t32 = pm_get_32k_tick();
-        if (pm_long_suspend != 0) {
+        if (pm_long_suspend) {
             tick_cur += (uint32_t)(((t32 - tick_32k_cur) >> 4) * (uint32_t)tick_32k_calib);
         } else {
             tick_cur += (uint32_t)(((t32 - tick_32k_cur) * (uint32_t)tick_32k_calib) >> 4);
@@ -348,9 +343,6 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     {
         uint8_t st = analog_read(areg_wakeup_status);
         reg_irq_en = irq;
-        if (st == 0) {
-            return STATUS_GPIO_ERR_NO_ENTER_PM;
-        }
-        return (int)(st | STATUS_ENTER_SUSPEND);
+        return st ? (int)(st | STATUS_ENTER_SUSPEND) : STATUS_GPIO_ERR_NO_ENTER_PM;
     }
 }

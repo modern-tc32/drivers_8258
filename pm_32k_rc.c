@@ -95,12 +95,14 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     analog_write(0x7e, analog7e_value);
     analog_write(0x2b, analog2b_value);
 
-    {
-        uint8_t wakeup_src_comparator = (uint8_t)(wakeup_src & PM_WAKEUP_COMPARATOR);
-        uint8_t wakeup_or_timer_mask = (uint8_t)((wakeup_src_comparator | timer_wakeup) | (uint8_t)(-((int8_t)(wakeup_src_comparator | timer_wakeup))));
-        uint8_t wakeup_comparator_mask = (uint8_t)(wakeup_src_comparator | (uint8_t)(-((int8_t)wakeup_src_comparator)));
-        analog_write(0x2c, (uint8_t)(0x16u | analog2c_high_bits | wakeup_or_timer_mask | (uint8_t)(wakeup_comparator_mask << 3)));
-    }
+    uint8_t cmp = (wakeup_src & PM_WAKEUP_COMPARATOR) != 0;
+    uint8_t any = cmp | timer_wakeup;
+
+    analog_write(0x2c,
+        0x16 |
+        analog2c_high_bits |
+        any |
+        (cmp << 3));
 
     {
         uint8_t r7 = analog_read(0x07);

@@ -32,6 +32,7 @@
 extern _attribute_data_retention_ unsigned char tl_24mrc_cal;
 
 _attribute_data_retention_	unsigned char system_clk_type;
+_attribute_data_retention_	unsigned char system_clk_mHz;
 _attribute_data_retention_  unsigned char sys_clock_print;
 
 /*24m rc calibrate configuration, the default value is set to require calibration*/

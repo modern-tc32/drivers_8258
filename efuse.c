@@ -1,9 +1,9 @@
 #include <stdint.h>
 
 extern uint8_t pm_get_info0(void);
-extern volatile uint8_t pm_bit_info_0;
-extern volatile uint8_t pm_bit_info_1;
-extern volatile uint32_t pm_curr_stack;
+volatile uint8_t pm_bit_info_0;
+volatile uint8_t pm_bit_info_1;
+volatile uint32_t pm_curr_stack;
 
 __attribute__((used, noinline)) static void get_sp_normal(void) {
     volatile uint32_t keep_r1 = 0;

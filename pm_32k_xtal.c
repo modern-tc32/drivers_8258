@@ -5,6 +5,14 @@
 #define SYS_DEEP_ANA_REG 0x3c
 #endif
 
+typedef uint8_t SleepMode_TypeDef;
+typedef uint8_t SleepWakeupSrc_TypeDef;
+enum {
+    SUSPEND_MODE = 0x00,
+    DEEPSLEEP_MODE = 0x80,
+    DEEPSLEEP_RETENTION_FLAG = 0x7f,
+};
+
 extern uint8_t analog_read(uint8_t addr);
 extern void analog_write(uint8_t addr, uint8_t value);
 extern uint32_t pm_get_32k_tick(void);
@@ -30,7 +38,7 @@ __attribute__((used, noinline, section(".text.switch_ext32kpad_to_int32krc"))) s
     analog_write(0x2c, (uint8_t)(mode | 0x16u));
 }
 
-__attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_wakeup_32k_xtal(uint8_t sleep_mode, uint8_t wakeup_src, uint32_t wakeup_tick) {
+__attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_wakeup_32k_xtal(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, uint32_t wakeup_tick) {
     uint8_t irq = reg_irq_en;
     reg_irq_en = 0;
     uint8_t has_timer = (uint8_t)(wakeup_src & 0x40u);
@@ -75,7 +83,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     uint16_t e4 = ((volatile uint8_t *)&g_pm_early_wakeup_time_us)[4] |
                   ((uint16_t)((volatile uint8_t *)&g_pm_early_wakeup_time_us)[5] << 8);
     uint32_t target;
-    if (sleep_mode == 0x80u) {
+    if (sleep_mode == DEEPSLEEP_MODE) {
         target = wakeup_tick - ((uint32_t)e4 << 4);
     } else {
         target = wakeup_tick - ((uint32_t)e0 << 4);
@@ -86,7 +94,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     uint8_t bak66 = reg_clk_sel;
     reg_clk_sel = 0;
 
-    uint8_t sm7 = (uint8_t)(sleep_mode & 0x7fu);
+    uint8_t sm7 = (uint8_t)(sleep_mode & DEEPSLEEP_RETENTION_FLAG);
     uint8_t v7 = 0;
 
     if (sm7 != 0) {
@@ -97,7 +105,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
         analog_write(0x2b, 0xde);
         v7 = 5;
         {
-            uint8_t x = (uint8_t)(((sleep_mode - 0x80u) | (uint8_t)(-((int8_t)(sleep_mode - 0x80u)))) & 0xffu);
+            uint8_t x = (uint8_t)(((sleep_mode - DEEPSLEEP_MODE) | (uint8_t)(-((int8_t)(sleep_mode - DEEPSLEEP_MODE)))) & 0xffu);
             analog_write(0x2c, (uint8_t)(0x16u | 0xc0u | x | (uint8_t)(x << 3)));
         }
     } else {
@@ -120,7 +128,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
         analog_write(0x7f, 0);
     }
 
-    if (sleep_mode == 0x80u) {
+    if (sleep_mode == DEEPSLEEP_MODE) {
             uint8_t r3c = analog_read(SYS_DEEP_ANA_REG);
             analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r3c | 0x02u));
     }
@@ -154,7 +162,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
         sleep_start();
     }
 
-    if (sleep_mode == 0x80u) {
+    if (sleep_mode == DEEPSLEEP_MODE) {
         uint8_t r = analog_read(SYS_DEEP_ANA_REG);
         analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r & 0xfeu));
         r = analog_read(SYS_DEEP_ANA_REG);
@@ -215,7 +223,7 @@ __attribute__((used, section(".text.pm_tim_recover_32k_xtal"))) uint32_t pm_tim_
     return d + tick_cur;
 }
 
-__attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_long_sleep_wakeup_32k_xtal(uint8_t sleep_mode, uint8_t wakeup_src, uint32_t wakeup_tick) {
+__attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_long_sleep_wakeup_32k_xtal(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, uint32_t wakeup_tick) {
     uint8_t irq = reg_irq_en;
     reg_irq_en = 0;
     uint8_t sm = sleep_mode;

@@ -5,6 +5,14 @@
 #define SYS_DEEP_ANA_REG 0x3c
 #endif
 
+typedef uint8_t SleepMode_TypeDef;
+typedef uint8_t SleepWakeupSrc_TypeDef;
+enum {
+    SUSPEND_MODE = 0x00,
+    DEEPSLEEP_MODE = 0x80,
+    DEEPSLEEP_RETENTION_FLAG = 0x7f,
+};
+
 
 extern uint8_t analog_read(uint8_t addr);
 extern void analog_write(uint8_t addr, uint8_t value);
@@ -24,7 +32,7 @@ extern volatile uint8_t tl_multi_addr;
 extern volatile uint32_t g_pm_r_delay_us;
 extern volatile uint32_t g_pm_early_wakeup_time_us;
 
-__attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wakeup_32k_rc(uint8_t sleep_mode, uint8_t wakeup_src, uint32_t wakeup_tick) {
+__attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wakeup_32k_rc(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, uint32_t wakeup_tick) {
     uint8_t irq = reg_irq_en;
     reg_irq_en = 0;
     uint8_t ws = wakeup_src;
@@ -87,7 +95,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     uint8_t bak66 = reg_clk_sel;
     reg_clk_sel = 0;
 
-    uint8_t sm7 = (uint8_t)(sleep_mode & 0x7fu);
+    uint8_t sm7 = (uint8_t)(sleep_mode & DEEPSLEEP_RETENTION_FLAG);
     uint8_t v7 = 0;
     uint8_t v2c_hi = 0;
     uint8_t v2b = 0xde;
@@ -99,7 +107,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         REG_ADDR8(0x63e) = tl_multi_addr;
         v7 = 5;
         v2c_hi = 0x40;
-    } else if (sleep_mode == 0) {
+    } else if (sleep_mode == SUSPEND_MODE) {
         analog_write(0x04, 0x48);
         analog_write(0x7e, 0x00);
         v7 = 4;
@@ -225,7 +233,7 @@ __attribute__((used, section(".text.pm_tim_recover_32k_rc"))) uint32_t pm_tim_re
     }
 }
 
-__attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_wakeup(uint8_t sleep_mode, uint8_t wakeup_src, uint32_t sleep_duration_us) {
+__attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_wakeup(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, uint32_t sleep_duration_us) {
     uint8_t irq = reg_irq_en;
     reg_irq_en = 0;
     uint8_t sm = sleep_mode;

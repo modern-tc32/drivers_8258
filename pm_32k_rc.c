@@ -4,6 +4,9 @@
 #include "include/pm.h"
 #include "include/analog.h"
 
+#define areg_wakeup_status 0x44
+#define WAKEUP_STATUS_ALL (WAKEUP_STATUS_COMPARATOR | WAKEUP_STATUS_TIMER_CORE | WAKEUP_STATUS_PAD)
+
 extern uint32_t __divsi3(uint32_t a, uint32_t b);
 extern uint32_t __udivsi3(uint32_t a, uint32_t b);
 
@@ -26,7 +29,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         uint32_t dt = wake_ticks - t0;
         if (dt > (0xe0u << 24)) {
             reg_irq_en = irq;
-            return (int)(analog_read(0x44) & 0x0fu);
+            return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
         }
 
         /* Intentional: use struct fields (not byte-wise loads). Keep as-is. */
@@ -40,18 +43,18 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
                 pm_long_suspend = 0;
             }
         } else {
-            analog_write(0x44, 0x0f);
-            while (((reg_system_tick - t0) < dt) && ((analog_read(0x44) & 0x0fu) == 0u)) {
+            analog_write(areg_wakeup_status, WAKEUP_STATUS_ALL);
+            while (((reg_system_tick - t0) < dt) && ((analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL) == 0u)) {
             }
             reg_irq_en = irq;
-            return (int)(analog_read(0x44) & 0x0fu);
+            return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
         }
     }
 
     if (func_before_suspend != 0) {
         if (func_before_suspend() == 0) {
             reg_irq_en = irq;
-            return 8;
+            return WAKEUP_STATUS_PAD;
         }
     }
 
@@ -65,7 +68,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     uint32_t target = wake_ticks - ((uint32_t)early << 4);
 
     analog_write(0x26, wakeup_src_u8);
-    analog_write(0x44, 0x0f);
+    analog_write(areg_wakeup_status, WAKEUP_STATUS_ALL);
 
     uint8_t bak66 = reg_clk_sel;
     reg_clk_sel = 0;
@@ -149,7 +152,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     }
 
     reg_system_tick_mode = 0x20;
-    if ((analog_read(0x44) & 0xf0u) == 0u) {
+    if ((analog_read(areg_wakeup_status) & (uint8_t)~WAKEUP_STATUS_ALL) == 0u) {
         sleep_start();
     }
 
@@ -178,16 +181,16 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
 
     reg_clk_sel = bak66;
     {
-        uint8_t st = analog_read(0x44);
+        uint8_t st = analog_read(areg_wakeup_status);
         if ((st & PM_WAKEUP_COMPARATOR) && timer_wakeup) {
             while ((reg_system_tick - wake_ticks) > (0x80u << 23)) {
             }
         }
         reg_irq_en = irq;
         if (st == 0) {
-            return 0x100;
+            return STATUS_GPIO_ERR_NO_ENTER_PM;
         }
-        return (int)(st | (1u << 30));
+        return (int)(st | STATUS_ENTER_SUSPEND);
     }
 }
 
@@ -214,13 +217,13 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
 
     if (has_timer) {
         if (sleep_duration_us < 0x40u) {
-            analog_write(0x44, 0x0f);
+            analog_write(areg_wakeup_status, WAKEUP_STATUS_ALL);
             uint32_t t = ((sleep_duration_us << 5) - sleep_duration_us);
             uint32_t budget = (t << 2) + sleep_duration_us;
-            while (((reg_system_tick - start_tick) < budget) && ((analog_read(0x44) & 0x0fu) == 0u)) {
+            while (((reg_system_tick - start_tick) < budget) && ((analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL) == 0u)) {
             }
             reg_irq_en = irq;
-            return (int)(analog_read(0x44) & 0x0fu);
+            return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
         }
     }
 
@@ -228,7 +231,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     if (func_before_suspend != 0) {
         if (func_before_suspend() == 0) {
             reg_irq_en = irq;
-            return 8;
+            return WAKEUP_STATUS_PAD;
         }
     }
 
@@ -237,7 +240,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
 
     uint32_t minus64 = sleep_duration_us - 0x40u;
     analog_write(0x26, wakeup_src);
-    analog_write(0x44, 0x0f);
+    analog_write(areg_wakeup_status, WAKEUP_STATUS_ALL);
 
     uint8_t bak66 = reg_clk_sel;
     reg_clk_sel = 0;
@@ -314,7 +317,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     }
 
     reg_system_tick_mode = 0x20;
-    if ((analog_read(0x44) & 0xf0u) == 0u) {
+    if ((analog_read(areg_wakeup_status) & (uint8_t)~WAKEUP_STATUS_ALL) == 0u) {
         sleep_start();
     }
 
@@ -343,11 +346,11 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
 
     reg_clk_sel = bak66;
     {
-        uint8_t st = analog_read(0x44);
+        uint8_t st = analog_read(areg_wakeup_status);
         reg_irq_en = irq;
         if (st == 0) {
-            return 0x100;
+            return STATUS_GPIO_ERR_NO_ENTER_PM;
         }
-        return (int)(st | (1u << 30));
+        return (int)(st | STATUS_ENTER_SUSPEND);
     }
 }

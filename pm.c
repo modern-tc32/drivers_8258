@@ -164,28 +164,23 @@ void __attribute__((section(".ram_code"))) sleep_start(void) {
 }
 
 unsigned int __attribute__((section(".text.pm_get_32k_tick"))) pm_get_32k_tick(void) {
-    uint32_t cnt = 0;
-    uint32_t prev = 0;
-    uint32_t cur = 0;
-    for (;;) {
-        uint32_t v = analog_read(areg_32k_tick_3);
-        v = (v << 8) + analog_read(areg_32k_tick_2);
-        v = (v << 8) + analog_read(areg_32k_tick_1);
-        v = (v << 8) + analog_read(areg_32k_tick_0);
-        cur = v;
-        if (cnt == 0) {
-            cnt = 1;
-            prev = cur;
-            continue;
+    uint32_t t0 = 0;
+    uint32_t t1 = 0;
+    uint32_t n = 0;
+    while (1) {
+        t0 = t1;
+        t1 = analog_read(areg_32k_tick_3);
+        t1 = (t1 << 8) + analog_read(areg_32k_tick_2);
+        t1 = (t1 << 8) + analog_read(areg_32k_tick_1);
+        t1 = (t1 << 8) + analog_read(areg_32k_tick_0);
+        if (n) {
+            if ((t1 - t0) < 2u) {
+                return t1;
+            } else if ((t0 ^ t1) == 1u) {
+                return t0;
+            }
         }
-        if ((cur ^ prev) == 1u) {
-            cur = prev;
-        }
-        if ((cur - prev) <= 1u) {
-            return cur;
-        }
-        cnt = cnt + 1;
-        prev = cur;
+        n++;
     }
 }
 
@@ -343,17 +338,17 @@ void __attribute__((section(".text.cpu_wakeup_init"))) cpu_wakeup_init(void) {
             pm_wait_xtal_ready();
             cpu_wakeup_no_deepretn_back_init();
         } else {
-            pmParam.mcu_status = 0;
+            pmParam.mcu_status = MCU_STATUS_BOOT;
         }
     } else {
-        pmParam.mcu_status = 1;
+        pmParam.mcu_status = MCU_STATUS_DEEPRET_BACK;
     }
 
     pmParam.wakeup_src = analog_read(areg_wakeup_src);
-    uint8_t ws = (uint8_t)(pmParam.wakeup_src & 0x0au);
-    pmParam.is_pad_wakeup = (uint8_t)(ws == 8u);
+    uint8_t ws = (uint8_t)(pmParam.wakeup_src & WAKEUP_STATUS_TIMER_PAD);
+    pmParam.is_pad_wakeup = (uint8_t)(ws == WAKEUP_STATUS_PAD);
 
-    if (pmParam.mcu_status == 1) {
+    if (pmParam.mcu_status == MCU_STATUS_DEEPRET_BACK) {
         uint32_t t = pm_get_32k_tick();
         t = pm_tim_recover ? pm_tim_recover(t) : t;
         tick_cur = t;

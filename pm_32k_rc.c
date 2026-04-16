@@ -266,18 +266,12 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     analog_write(0x7e, (uint8_t)sleep_mode);
 
     {
-        uint8_t wakeup_src_comparator = (uint8_t)(wakeup_src & PM_WAKEUP_COMPARATOR);
-        uint8_t x = (uint8_t)(wakeup_src_comparator | has_timer);
-        uint8_t abx = (uint8_t)((x | (uint8_t)(-(int8_t)x)) & 0xffu);
-        uint8_t abs80 = (uint8_t)((wakeup_src_comparator | (uint8_t)(-(int8_t)wakeup_src_comparator)) & 0xffu);
-        uint8_t mode2c = (uint8_t)(v2c_base | abx | (uint8_t)(abs80 << 3));
-        analog_write(0x2c, mode2c);
+        uint8_t cmp = (wakeup_src & PM_WAKEUP_COMPARATOR) != 0;
+        uint8_t any = cmp | has_timer;
+        analog_write(0x2c, (uint8_t)(v2c_base | any | (cmp << 3)));
     }
 
-    {
-        uint8_t r7 = analog_read(0x07);
-        analog_write(0x07, (uint8_t)((r7 & (uint8_t)~0x07u) | an7));
-    }
+    analog_write(0x07, (analog_read(0x07) & ~0x07) | an7);
 
     if (sm7 == 0) {
         REG_ADDR8(0x602) = 0x08;

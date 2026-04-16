@@ -137,7 +137,8 @@ void __attribute__((section(".ram_code"))) sleep_start(void) {
     reg_mspi_ctrl = 0;
     reg_mspi_data = 0xb9;
 
-    CLOCK_DLY_2_CYC;
+    for (volatile uint32_t i = 0; i <= 1u; ++i) {
+    }
 
     reg_mspi_ctrl = 1;
     reg_gpio_func_sel_pe = 0;
@@ -155,7 +156,8 @@ void __attribute__((section(".ram_code"))) sleep_start(void) {
     reg_mspi_ctrl = 0;
     reg_mspi_data = 0xab;
 
-    CLOCK_DLY_2_CYC;
+    for (volatile uint32_t i = 0; i <= 1u; ++i) {
+    }
 
     reg_mspi_ctrl = 1;
     analog_write(areg_pwdn_setting, 0x80);

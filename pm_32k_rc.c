@@ -96,9 +96,9 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     analog_write(0x2b, analog2b_value);
 
     {
-        uint8_t src80 = (uint8_t)(wakeup_src & PM_WAKEUP_COMPARATOR);
-        uint8_t wakeup_or_timer_mask = (uint8_t)((src80 | timer_wakeup) | (uint8_t)(-((int8_t)(src80 | timer_wakeup))));
-        uint8_t wakeup_comparator_mask = (uint8_t)(src80 | (uint8_t)(-((int8_t)src80)));
+        uint8_t wakeup_src_comparator = (uint8_t)(wakeup_src & PM_WAKEUP_COMPARATOR);
+        uint8_t wakeup_or_timer_mask = (uint8_t)((wakeup_src_comparator | timer_wakeup) | (uint8_t)(-((int8_t)(wakeup_src_comparator | timer_wakeup))));
+        uint8_t wakeup_comparator_mask = (uint8_t)(wakeup_src_comparator | (uint8_t)(-((int8_t)wakeup_src_comparator)));
         analog_write(0x2c, (uint8_t)(0x16u | analog2c_high_bits | wakeup_or_timer_mask | (uint8_t)(wakeup_comparator_mask << 3)));
     }
 
@@ -210,11 +210,10 @@ __attribute__((used, section(".text.pm_tim_recover_32k_rc"))) unsigned int pm_ti
 __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_wakeup(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int sleep_duration_us) {
     uint8_t irq = reg_irq_en;
     reg_irq_en = 0;
-    uint8_t sm = sleep_mode;
     uint32_t start_tick = reg_system_tick;
     uint16_t calib = REG_ADDR16(0x750);
     tick_32k_calib = calib;
-    uint8_t has_timer = (uint8_t)(wakeup_src & 0x40u);
+    uint8_t has_timer = (uint8_t)(wakeup_src & PM_WAKEUP_TIMER);
 
     if (has_timer) {
         if (sleep_duration_us < 0x40u) {
@@ -246,7 +245,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     uint8_t bak66 = reg_clk_sel;
     reg_clk_sel = 0;
 
-    uint8_t sm7 = (uint8_t)(sm & 0x7fu);
+    uint8_t sm7 = (uint8_t)(sleep_mode & 0x7fu);
     uint8_t an7 = 0;
     uint8_t v2c_base = 0x16;
 
@@ -265,13 +264,13 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
         analog_write(0x2b, 0x5e);
     }
 
-    analog_write(0x7e, sm);
+    analog_write(0x7e, (uint8_t)sleep_mode);
 
     {
-        uint8_t src80 = (uint8_t)(wakeup_src & 0x80u);
-        uint8_t x = (uint8_t)(src80 | (has_timer ? 0x40u : 0x00u));
+        uint8_t wakeup_src_comparator = (uint8_t)(wakeup_src & PM_WAKEUP_COMPARATOR);
+        uint8_t x = (uint8_t)(wakeup_src_comparator | has_timer);
         uint8_t abx = (uint8_t)((x | (uint8_t)(-(int8_t)x)) & 0xffu);
-        uint8_t abs80 = (uint8_t)((src80 | (uint8_t)(-(int8_t)src80)) & 0xffu);
+        uint8_t abs80 = (uint8_t)((wakeup_src_comparator | (uint8_t)(-(int8_t)wakeup_src_comparator)) & 0xffu);
         uint8_t mode2c = (uint8_t)(v2c_base | abx | (uint8_t)(abs80 << 3));
         analog_write(0x2c, mode2c);
     }
@@ -290,7 +289,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
 
     {
         uint32_t half_calib = (uint32_t)(calib >> 1);
-        if (sm) {
+        if (sleep_mode) {
             uint8_t r3c = analog_read(SYS_DEEP_ANA_REG);
             analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r3c | 0x02u));
         }
@@ -330,7 +329,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
         sleep_start();
     }
 
-    if (sm) {
+    if (sleep_mode) {
         uint8_t r3c = analog_read(SYS_DEEP_ANA_REG);
         analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r3c & 0xfdu));
         soft_reboot_dly13ms_use24mRC();

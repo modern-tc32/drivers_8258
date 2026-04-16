@@ -2,12 +2,11 @@
 #include "include/register.h"
 #include "include/clock.h"
 #include "include/pm.h"
+#include "include/analog.h"
 #ifndef SYS_DEEP_ANA_REG
 #define SYS_DEEP_ANA_REG 0x3c
 #endif
 
-extern uint8_t analog_read(uint8_t addr);
-extern void analog_write(uint8_t addr, uint8_t value);
 extern uint32_t __divsi3(uint32_t a, uint32_t b);
 extern uint32_t __udivsi3(uint32_t a, uint32_t b);
 __attribute__((used, noinline)) static void switch_ext32kpad_to_int32krc(uint32_t mode);

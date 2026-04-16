@@ -24,6 +24,7 @@
 #include "audio.h"
 #include "pga.h"
 #include "adc.h"
+#include "analog.h"
 #include "irq.h"
 #include "adc.h"
 #include "register.h"

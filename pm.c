@@ -3,6 +3,7 @@
 #include "include/clock.h"
 #include "include/irq.h"
 #include "include/pm.h"
+#include "include/analog.h"
 
 #define reg_pm_info_sel              REG_ADDR8(0x74)
 #define reg_pm_info0                 REG_ADDR32(0x48)
@@ -50,8 +51,6 @@ pm_tim_recover_handler_t pm_tim_recover = 0;
 cpu_pm_handler_t cpu_sleep_wakeup = 0;
 pm_para_t pmParam = {0, 0, 0};
 
-extern uint8_t analog_read(uint8_t addr);
-extern void analog_write(uint8_t addr, uint8_t value);
 extern void rc_24m_cal(void);
 extern void doubler_calibration(void);
 extern void efuse_sys_check(uint32_t info);

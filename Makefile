@@ -2,7 +2,7 @@ TC32_GCC := ../tc32-vendor/bin/tc32-elf-gcc
 TC32_OBJDUMP := ../tc32-vendor/bin/tc32-elf-objdump
 TC32_NM := ../tc32-vendor/bin/tc32-elf-nm
 
-CFLAGS := -O2 -fomit-frame-pointer -Wall -Wextra -std=gnu99 \
+CFLAGS := -O2 -fomit-frame-pointer -finline-functions -finline-small-functions -Wall -Wextra -std=gnu99 \
 	-I../tc_ble_single_sdk/drivers/B85 \
 	-I../tc_ble_single_sdk/drivers/B85/lib/include \
 	-I../tc_ble_single_sdk/common \

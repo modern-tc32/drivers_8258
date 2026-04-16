@@ -3,6 +3,8 @@
 #include "include/clock.h"
 #include "include/pm.h"
 #include "include/analog.h"
+#include "include/timer.h"
+#include "include/irq.h"
 
 
 //system timer clock source is constant 16M, never change
@@ -24,15 +26,14 @@ __attribute__((used, noinline, section(".text.switch_ext32kpad_to_int32krc"))) s
 }
 
 __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_wakeup_32k_xtal(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int wakeup_tick) {
-    uint8_t irq = reg_irq_en;
-    reg_irq_en = 0;
+    uint8_t irq = irq_disable();
     uint8_t timer_wakeup = (uint8_t)(wakeup_src & PM_WAKEUP_TIMER);
     uint32_t start = reg_system_tick;
 
     if (timer_wakeup) {
         uint32_t dt = wakeup_tick - start;
         if (dt > (0xe0u << 24)) {
-            reg_irq_en = irq;
+            irq_restore(irq);
             return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
         }
 
@@ -47,14 +48,14 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
             analog_write(areg_wakeup_status, WAKEUP_STATUS_ALL);
             while (((reg_system_tick - start) < dt) && ((analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL) == 0u)) {
             }
-            reg_irq_en = irq;
+            irq_restore(irq);
             return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
         }
     }
 
     if (func_before_suspend != 0) {
         if (func_before_suspend() == 0) {
-            reg_irq_en = irq;
+            irq_restore(irq);
             return WAKEUP_STATUS_PAD;
         }
     }
@@ -161,7 +162,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
 		}
 	}
 
-	tick_32k_cur = tick_cur + 20 * SYSTEM_TIMER_TICK_1US;
+	tick_32k_cur = tick_cur + 20 * CLOCK_16M_SYS_TIMER_CLK_1US;
 
     reg_system_tick_mode = 0;
     CLOCK_DLY_7_CYC;
@@ -177,7 +178,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
             while ((reg_system_tick - wakeup_tick) > (0x80u << 23)) {
             }
         }
-        reg_irq_en = irq;
+        irq_restore(irq);
         return st ? (int)(st | STATUS_ENTER_SUSPEND) : STATUS_GPIO_ERR_NO_ENTER_PM;
     }
 }
@@ -192,8 +193,7 @@ __attribute__((used, section(".text.pm_tim_recover_32k_xtal"))) unsigned int pm_
 }
 
 __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_long_sleep_wakeup_32k_xtal(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int wakeup_tick) {
-    uint8_t irq = reg_irq_en;
-    reg_irq_en = 0;
+    uint8_t irq = irq_disable();
     uint8_t wakeup_src_comparator = (uint8_t)((wakeup_src & PM_WAKEUP_COMPARATOR) != 0);
     uint32_t start = reg_system_tick;
     uint32_t wake_ticks = wakeup_tick;
@@ -206,7 +206,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
             uint32_t budget = ((((t << 6) - t) << 3) + wake_ticks) >> 5;
             while (((reg_system_tick - start) < budget) && ((analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL) == 0u)) {
             }
-            reg_irq_en = irq;
+            irq_restore(irq);
             return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
         }
     }
@@ -214,7 +214,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
     pm_long_suspend = 0;
     if (func_before_suspend != 0) {
         if (func_before_suspend() == 0) {
-            reg_irq_en = irq;
+            irq_restore(irq);
             return WAKEUP_STATUS_PAD;
         }
     }
@@ -347,7 +347,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
     reg_clk_sel = bak66;
     {
         uint8_t st = analog_read(areg_wakeup_status);
-        reg_irq_en = irq;
+        irq_restore(irq);
         return st ? (int)(st | STATUS_ENTER_SUSPEND) : STATUS_GPIO_ERR_NO_ENTER_PM;
     }
 }

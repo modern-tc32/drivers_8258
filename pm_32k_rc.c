@@ -3,6 +3,8 @@
 #include "include/clock.h"
 #include "include/pm.h"
 #include "include/analog.h"
+#include "include/timer.h"
+#include "include/irq.h"
 
 #define areg_wakeup_status 0x44
 #define WAKEUP_STATUS_ALL (WAKEUP_STATUS_COMPARATOR | WAKEUP_STATUS_TIMER_CORE | WAKEUP_STATUS_PAD)
@@ -13,8 +15,7 @@ extern uint32_t __udivsi3(uint32_t a, uint32_t b);
 __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wakeup_32k_rc(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int wakeup_tick) {
     uint8_t sleep_mode_u8 = (uint8_t)sleep_mode;
     uint8_t wakeup_src_u8 = (uint8_t)wakeup_src;
-    uint8_t irq = reg_irq_en;
-    reg_irq_en = 0;
+    uint8_t irq = irq_disable();
     uint32_t wake_ticks = wakeup_tick;
 
     uint8_t timer_wakeup = (uint8_t)(wakeup_src_u8 & PM_WAKEUP_TIMER);
@@ -27,8 +28,8 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
 
     if (timer_wakeup) {
         uint32_t dt = wake_ticks - t0;
-        if (dt > (0xe0u << 24)) {
-            reg_irq_en = irq;
+        if (dt > 0xE0000000){ //BIT(31)+BIT(30)+BIT(19)   7/8 cycle of 32bit, 268.44*7/8 = 234.88 S
+            irq_restore(irq);
             return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
         }
 
@@ -46,14 +47,14 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
             analog_write(areg_wakeup_status, WAKEUP_STATUS_ALL);
             while (((reg_system_tick - t0) < dt) && ((analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL) == 0u)) {
             }
-            reg_irq_en = irq;
+            irq_restore(irq);
             return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
         }
     }
 
     if (func_before_suspend != 0) {
         if (func_before_suspend() == 0) {
-            reg_irq_en = irq;
+            irq_restore(irq);
             return WAKEUP_STATUS_PAD;
         }
     }
@@ -169,7 +170,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         } else {
             tick_cur += ((t32 - tick_32k_cur) * (uint32_t)tick_32k_calib) >> 4;
         }
-        tick_32k_cur = tick_cur + 20 * SYSTEM_TIMER_TICK_1US;
+        tick_32k_cur = tick_cur + 20 * CLOCK_16M_SYS_TIMER_CLK_1US;
     }
 
     reg_system_tick_mode = 0;
@@ -186,23 +187,26 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
             while ((reg_system_tick - wake_ticks) > (0x80u << 23)) {
             }
         }
-        reg_irq_en = irq;
+        irq_restore(irq);
         return st ? (int)(st | STATUS_ENTER_SUSPEND) : STATUS_GPIO_ERR_NO_ENTER_PM;
     }
 }
 
 
 __attribute__((used, section(".text.pm_tim_recover_32k_rc"))) unsigned int pm_tim_recover_32k_rc(unsigned int tick_32k_now) {
-    if (pm_long_suspend) {
-        return tick_cur + ((uint32_t)(tick_32k_now - tick_32k_cur) / 16u) * (uint32_t)tick_32k_calib;
-    } else {
-        return tick_cur + ((uint32_t)(tick_32k_now - tick_32k_cur) * (uint32_t)tick_32k_calib) / 16u;
+	unsigned int deepRet_tick;
+
+    if(pm_long_suspend){
+        deepRet_tick = tick_cur + (unsigned int)(tick_32k_now - tick_32k_cur) / 16 * tick_32k_calib;
     }
+    else{
+        deepRet_tick = tick_cur + (unsigned int)(tick_32k_now - tick_32k_cur) * tick_32k_calib / 16;		// current clock
+    }
+	return deepRet_tick;
 }
 
 __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_wakeup(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int sleep_duration_us) {
-    uint8_t irq = reg_irq_en;
-    reg_irq_en = 0;
+    uint8_t irq = irq_disable();
     uint32_t start_tick = reg_system_tick;
     uint16_t calib = REG_ADDR16(0x750);
     tick_32k_calib = calib;
@@ -215,7 +219,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
             uint32_t budget = (t << 2) + sleep_duration_us;
             while (((reg_system_tick - start_tick) < budget) && ((analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL) == 0u)) {
             }
-            reg_irq_en = irq;
+            irq_restore(irq);
             return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
         }
     }
@@ -223,7 +227,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     pm_long_suspend = 0;
     if (func_before_suspend != 0) {
         if (func_before_suspend() == 0) {
-            reg_irq_en = irq;
+            irq_restore(irq);
             return WAKEUP_STATUS_PAD;
         }
     }
@@ -327,7 +331,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
         } else {
             tick_cur += (uint32_t)(((t32 - tick_32k_cur) * (uint32_t)tick_32k_calib) >> 4);
         }
-        tick_32k_cur = tick_cur + 20 * SYSTEM_TIMER_TICK_1US;
+        tick_32k_cur = tick_cur + 20 * CLOCK_16M_SYS_TIMER_CLK_1US;
     }
 
     reg_system_tick_mode = 0x00;
@@ -340,7 +344,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     reg_clk_sel = bak66;
     {
         uint8_t st = analog_read(areg_wakeup_status);
-        reg_irq_en = irq;
+        irq_restore(irq);
         return st ? (int)(st | STATUS_ENTER_SUSPEND) : STATUS_GPIO_ERR_NO_ENTER_PM;
     }
 }

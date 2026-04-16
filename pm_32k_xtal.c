@@ -83,8 +83,8 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
         analog_write(0x2b, 0xde);
         analog7_mode = 5;
         {
-            uint8_t x = (uint8_t)((((uint8_t)sleep_mode - DEEPSLEEP_MODE) | (uint8_t)(-((int8_t)((uint8_t)sleep_mode - DEEPSLEEP_MODE)))) & 0xffu);
-            analog_write(0x2c, (uint8_t)(0x16u | 0xc0u | x | (uint8_t)(x << 3)));
+            uint8_t sleep_mode_not_deep = (uint8_t)((uint8_t)sleep_mode != DEEPSLEEP_MODE);
+            analog_write(0x2c, (uint8_t)(0x16u | 0xc0u | sleep_mode_not_deep | (uint8_t)(sleep_mode_not_deep << 3)));
         }
     } else {
         analog_write(0x04, 0x48);

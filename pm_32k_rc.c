@@ -3,9 +3,6 @@
 #include "include/clock.h"
 #include "include/pm.h"
 #include "include/analog.h"
-#ifndef SYS_DEEP_ANA_REG
-#define SYS_DEEP_ANA_REG 0x3c
-#endif
 
 extern uint32_t __divsi3(uint32_t a, uint32_t b);
 extern uint32_t __udivsi3(uint32_t a, uint32_t b);

@@ -4,9 +4,6 @@
 #define SYS_DEEP_ANA_REG 0x3c
 #endif
 
-#define REG8(a) (*(volatile uint8_t *)(uintptr_t)(a))
-#define REG32(a) (*(volatile uint32_t *)(uintptr_t)(a))
-
 extern uint8_t analog_read(uint8_t addr);
 extern void analog_write(uint8_t addr, uint8_t value);
 extern uint32_t pm_get_32k_tick(void);

@@ -4,8 +4,6 @@
 #define SYS_DEEP_ANA_REG 0x3c
 #endif
 
-#define REG8(a) (*(volatile uint8_t *)(uintptr_t)(a))
-#define REG32(a) (*(volatile uint32_t *)(uintptr_t)(a))
 
 extern uint8_t analog_read(uint8_t addr);
 extern void analog_write(uint8_t addr, uint8_t value);
@@ -42,7 +40,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     if (has_timer) {
         uint32_t dt = wake_ticks - t0;
         if (dt > (0xe0u << 24)) {
-            REG8(0x00800643) = irq;
+            reg_irq_en = irq;
             return (int)(analog_read(0x44) & 0x0fu);
         }
 

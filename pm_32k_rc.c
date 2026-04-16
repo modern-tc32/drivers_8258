@@ -104,10 +104,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         any |
         (cmp << 3));
 
-    {
-        uint8_t r7 = analog_read(0x07);
-        analog_write(0x07, (uint8_t)((r7 & (uint8_t)~0x07u) | analog7_mode));
-    }
+    analog_write(0x07, (analog_read(0x07) & ~0x07) | analog7_mode);
 
     if (sleep_mode_no_retention == 0) {
         REG_ADDR8(0x602) = 0x08;

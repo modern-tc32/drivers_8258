@@ -5,20 +5,20 @@ volatile uint8_t pm_bit_info_0;
 volatile uint8_t pm_bit_info_1;
 volatile uint32_t pm_curr_stack;
 
-__attribute__((used, noinline)) static void get_sp_normal(void) {
-    volatile uint32_t keep_r1 = 0;
+__attribute__((used, noinline, section(".text.get_sp_normal"))) static void get_sp_normal(void) {
+    volatile uint32_t keep_r1;
     pm_curr_stack = (uint32_t)&keep_r1;
 }
 
-__attribute__((used)) static void MYSEC(void) {
+__attribute__((used, section(".text.MYSEC"))) static void MYSEC(void) {
 }
 
-uint32_t normalSpGet(void) {
+__attribute__((section(".text.normalSpGet"))) uint32_t normalSpGet(void) {
     get_sp_normal();
     return pm_curr_stack;
 }
 
-void efuse_sys_check(uint32_t v) {
+__attribute__((section(".text.efuse_sys_check"))) void efuse_sys_check(uint32_t v) {
     uint32_t info0 = pm_get_info0() & 0x0fu;
     if (info0 > 9u) {
         *(volatile uint8_t *)(uintptr_t)0x0080006fu = 0x20u;

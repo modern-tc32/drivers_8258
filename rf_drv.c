@@ -51,7 +51,7 @@ enum {
     FLD_RF_MODE_RX_EN = BIT(0),      /* reg 0x428 */
 };
 
-void rf_drv_init(RF_ModeTypeDef rf_mode) {
+__attribute__((section(".text.rf_drv_init"))) void rf_drv_init(RF_ModeTypeDef rf_mode) {
     LoadTblCmdSet(tbl_rf_init, 5);
     if (rf_mode == RF_MODE_BLE_1M) {
         LoadTblCmdSet(tbl_rf_1m, 25);
@@ -62,7 +62,7 @@ void rf_drv_init(RF_ModeTypeDef rf_mode) {
     g_RFMode = rf_mode;
 }
 
-void rf_set_channel(signed char chn, unsigned short option) {
+__attribute__((section(".text.rf_set_channel"))) void rf_set_channel(signed char chn, unsigned short option) {
     int16_t ch = chn;
     if ((int32_t)((int16_t)option << 16) < 0) {
         ch = (int8_t)rf_chn_table[(int)chn];
@@ -100,7 +100,7 @@ void rf_set_channel(signed char chn, unsigned short option) {
     REG_ADDR8(0x1229) = rf_vco_cap;
 }
 
-void rf_set_power_level(RF_PowerTypeDef level) {
+__attribute__((section(".text.rf_set_power_level"))) void rf_set_power_level(RF_PowerTypeDef level) {
     if ((int8_t)level < 0) {
         REG_ADDR8(0x1225) |= BIT(6);
     } else {
@@ -119,13 +119,13 @@ void rf_set_power_level(RF_PowerTypeDef level) {
     REG_ADDR8(0x1227) = rf_pa_ctrl1;
 }
 
-void rf_set_power_level_index(RF_PowerIndexTypeDef index) {
+__attribute__((section(".text.rf_set_power_level_index"))) void rf_set_power_level_index(RF_PowerIndexTypeDef index) {
     if (index <= 0x3b) {
         rf_set_power_level(rf_power_Level_list[index]);
     }
 }
 
-int rf_trx_state_set(RF_StatusTypeDef state, signed char chn) {
+__attribute__((section(".text.rf_trx_state_set"))) int rf_trx_state_set(RF_StatusTypeDef state, signed char chn) {
     reg_rf_ll_ctrl_0 = RF_TRX_OFF;
     rf_set_channel(chn, 0);
 
@@ -163,17 +163,17 @@ int rf_trx_state_set(RF_StatusTypeDef state, signed char chn) {
     return 0;
 }
 
-void rf_tx_pkt(unsigned char *rf_txaddr) {
+__attribute__((section(".text.rf_tx_pkt"))) void rf_tx_pkt(unsigned char *rf_txaddr) {
     reg_dma3_addrHi = 4;
     reg_dma_rf_tx_addr = (uint16_t)(uintptr_t)rf_txaddr;
     REG_ADDR8(0xc5b) |= BIT(3);
 }
 
-RF_StatusTypeDef rf_trx_state_get(void) {
+__attribute__((section(".text.rf_trx_state_get"))) RF_StatusTypeDef rf_trx_state_get(void) {
     return RF_TRxState;
 }
 
-void rf_rx_buffer_set(unsigned char *rf_rx_addr, int size, unsigned char pingpong_en) {
+__attribute__((section(".text.rf_rx_buffer_set"))) void rf_rx_buffer_set(unsigned char *rf_rx_addr, int size, unsigned char pingpong_en) {
     uint8_t dma_mode = pingpong_en ? 3u : 1u;
     reg_dma_rf_rx_addr = (uint16_t)(uintptr_t)rf_rx_addr;
     reg_dma_rf_rx_size = (uint8_t)(((unsigned int)size << 20) >> 24);
@@ -181,28 +181,28 @@ void rf_rx_buffer_set(unsigned char *rf_rx_addr, int size, unsigned char pingpon
     g_RFRxPingpongEn = pingpong_en;
 }
 
-void rf_rx_cfg(int size, unsigned char pingpong_en) {
+__attribute__((section(".text.rf_rx_cfg"))) void rf_rx_cfg(int size, unsigned char pingpong_en) {
     uint8_t dma_mode = pingpong_en ? 3u : 1u;
     reg_dma_rf_rx_size = (uint8_t)(((unsigned int)size << 20) >> 24);
     reg_dma_rf_rx_mode = dma_mode;
     g_RFRxPingpongEn = pingpong_en;
 }
 
-void rf_start_stx(void *addr, unsigned int tick) {
+__attribute__((section(".text.rf_start_stx"))) void rf_start_stx(void *addr, unsigned int tick) {
     reg_rf_ll_cmd_sch = (uint32_t)(uintptr_t)addr;
     reg_rf_ll_ctrl_3 |= FLD_RF_CMD_SCHEDULE_EN;
     reg_rf_ll_cmd = 0x85;
     reg_dma_rf_tx_addr = (uint16_t)tick;
 }
 
-void rf_start_srx(unsigned int tick) {
+__attribute__((section(".text.rf_start_srx"))) void rf_start_srx(unsigned int tick) {
     reg_rf_rx_1st_timeout = 0x0fffffff;
     reg_rf_ll_cmd_sch = tick;
     reg_rf_ll_ctrl_3 |= FLD_RF_CMD_SCHEDULE_EN;
     reg_rf_ll_cmd_2B = 0x3f86;
 }
 
-void rf_pn_disable(void) {
+__attribute__((section(".text.rf_pn_disable"))) void rf_pn_disable(void) {
     REG_ADDR8(0x401) = 0;
     REG_ADDR8(0x404) &= (uint8_t)~BIT(5);
 }

@@ -745,6 +745,14 @@ enum{
 	FLD_CLR_WD =				BIT(27),
 };
 
+#define WATCHDOG_TIMEOUT_COEFF	18		//  check register definiton, 0x622
+#define WATCHDOG_DISABLE	( reg_tmr_ctrl &= ~FLD_TMR_WD_EN )
+
+#define reg_wd_ctrl1            REG_ADDR8(0x622)
+enum{
+	FLD_WD_EN     = BIT(7),
+};
+
 #define reg_tmr_sta				REG_ADDR8(0x623)
 enum{
 	FLD_TMR_STA_TMR0 =			BIT(0),
@@ -1198,6 +1206,7 @@ typedef enum {
 #define reg_dma_tx_wptr			REG_ADDR8(0xc2b)
 #define reg_dma_tx_fifo			REG_ADDR16(0xc2c)
 enum{
+	FLD_DMA_RPTR_MASK =			0x0F, // max 15
 	FLD_DMA_RPTR_CLR =			BIT(4),
 	FLD_DMA_RPTR_NEXT =			BIT(5),
 	FLD_DMA_RPTR_SET =			BIT(6),
@@ -1214,6 +1223,35 @@ enum{
 #define reg_dma7_addrHi			REG_ADDR8(0xc48)
 
 /*******************************      linklayer registers: 0xf00      ******************************/
+enum{
+	FLD_RF_LL_CMD_STOP 		= 0,
+	FLD_RF_LL_CMD_BTX		= 1,
+	FLD_RF_LL_CMD_BRX		= 2,
+	FLD_RF_LL_CMD_PTX		= 3,
+	FLD_RF_LL_CMD_PRX 		= 4,
+	FLD_RF_LL_CMD_STX 		= 5,
+	FLD_RF_LL_CMD_SRX 		= 6,
+	FLD_RF_LL_CMD_STX2RX	= 7,
+	FLD_RF_LL_CMD_SRX2TX	= 8,
+};
+
+#define reg_rf_ll_cmd_2B		REG_ADDR16(0xf00)
+#define reg_rf_ll_cmd			REG_ADDR8(0xf00)
+enum{
+	FLD_RF_R_CMD                 =	BIT_RNG(0,3),
+	FLD_RF_R_STOP                =	0,
+	FLD_RF_R_BTX                 =	1,
+	FLD_RF_R_BRX                 =	2,
+	FLD_RF_R_PTX                 =	3,
+	FLD_RF_R_PRX                 =	4,
+	FLD_RF_R_STX                 =	5,
+	FLD_RF_R_SRX                 =	6,
+	FLD_RF_R_STR                 =	7,
+	FLD_RF_R_SRT                 =	8,
+	FLD_RF_R_CMD_TRIG            =  BIT(7),
+};
+
+#define	STOP_RF_STATE_MACHINE	(reg_rf_ll_cmd = 0x80 )
 
 #define reg_rf_ll_ctrl_0		REG_ADDR8(0xf02)
 
@@ -1248,9 +1286,22 @@ enum{
 	FLD_RF_R_TX_EN_DLY =		BIT_RNG(4,7),
 };
 
+#define reg_rf_ll_cmd_sch 		REG_ADDR32(0xf18)
 
 #define reg_rf_irq_mask			REG_ADDR16(0xf1c)
 #define reg_rf_irq_status		REG_ADDR16(0xf20)
+
+enum{
+	FLD_RF_SN = 		BIT(0),
+};
+
+#define reg_rf_ll_pid_l			REG_ADDR8(0xf22)
+enum{
+	FLD_RF_NESN	=       BIT(4),
+};
+
+#define reg_rf_ll_pid_h			REG_ADDR8(0xf23)
+#define reg_rf_rx_1st_timeout	REG_ADDR32(0xf28)
 #define reg_rf_fsm_timeout		REG_ADDR32(0xf2c)
 
 #define		CLEAR_ALL_RFIRQ_STATUS   ( reg_rf_irq_status = 0xffff )

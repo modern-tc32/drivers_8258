@@ -12,8 +12,7 @@ extern uint32_t __udivsi3(uint32_t a, uint32_t b);
 __attribute__((used, noinline)) static void switch_ext32kpad_to_int32krc(uint32_t mode);
 
 __attribute__((used, noinline, section(".text.switch_ext32kpad_to_int32krc"))) static void switch_ext32kpad_to_int32krc(uint32_t mode) {
-    uint8_t v = analog_read(SYS_DEEP_ANA_REG);
-    analog_write(SYS_DEEP_ANA_REG, (uint8_t)(v & 0xfeu));
+    ANA_SYS_DEEP_CLR(SYS_NEED_REINIT_EXT32K);
     analog_write(0x2d, 0x15);
     analog_write(0x05, 0x02);
     analog_write(0x2c, (uint8_t)(mode | 0x16u));
@@ -109,8 +108,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     }
 
     if (sleep_mode == DEEPSLEEP_MODE) {
-            uint8_t r3c = analog_read(SYS_DEEP_ANA_REG);
-            analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r3c | 0x02u));
+        ANA_SYS_DEEP_SET(SYS_DEEP_SLEEP_FLAG);
     }
 
     analog_write(0x20, 0x77);
@@ -142,10 +140,8 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     }
 
     if (sleep_mode == DEEPSLEEP_MODE) {
-        uint8_t r = analog_read(SYS_DEEP_ANA_REG);
-        analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r & 0xfeu));
-        r = analog_read(SYS_DEEP_ANA_REG);
-        analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r & 0xfdu));
+        ANA_SYS_DEEP_CLR(SYS_NEED_REINIT_EXT32K);
+        ANA_SYS_DEEP_CLR(SYS_DEEP_SLEEP_FLAG);
         soft_reboot_dly13ms_use24mRC();
         reg_pwdn_ctrl = FLD_PWDN_CTRL_REBOOT;
     }
@@ -293,8 +289,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
     }
 
     if (sleep_mode != SUSPEND_MODE) {
-        uint8_t r3c = analog_read(SYS_DEEP_ANA_REG);
-        analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r3c | 0x02u));
+        ANA_SYS_DEEP_SET(SYS_DEEP_SLEEP_FLAG);
     }
 
     analog_write(0x20, 0x77);
@@ -327,10 +322,9 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
     }
 
     if (sleep_mode != SUSPEND_MODE) {
-        uint8_t r = analog_read(SYS_DEEP_ANA_REG);
-        analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r & 0xfeu));
-        r = analog_read(SYS_DEEP_ANA_REG);
-        analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r & 0xfdu));
+        ANA_SYS_DEEP_CLR(SYS_NEED_REINIT_EXT32K);
+        ANA_SYS_DEEP_CLR(SYS_DEEP_SLEEP_FLAG);
+
         soft_reboot_dly13ms_use24mRC();
         reg_pwdn_ctrl = FLD_PWDN_CTRL_REBOOT;
     }

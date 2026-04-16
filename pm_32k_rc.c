@@ -117,8 +117,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     {
         uint32_t half = (uint32_t)(calib >> 1);
         if (sleep_mode_u8) {
-            uint8_t r = analog_read(SYS_DEEP_ANA_REG);
-            analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r | 0x02u));
+            ANA_SYS_DEEP_SET(SYS_DEEP_SLEEP_FLAG);
             analog_write(0x20, (uint8_t)(0x7fu - (uint8_t)__divsi3(0xfa00u + half, (uint32_t)tick_32k_calib)));
         } else {
             analog_write(0x20, (uint8_t)(0x7fu - (uint8_t)__divsi3(0xfa00u + half, (uint32_t)tick_32k_calib)));
@@ -155,8 +154,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     }
 
     if (sleep_mode_u8) {
-        uint8_t r = analog_read(SYS_DEEP_ANA_REG);
-        analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r & 0xfdu));
+        ANA_SYS_DEEP_CLR(SYS_DEEP_SLEEP_FLAG);
         soft_reboot_dly13ms_use24mRC();
         reg_pwdn_ctrl = FLD_PWDN_CTRL_REBOOT;
     }
@@ -283,8 +281,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     {
         uint32_t half_calib = (uint32_t)(calib >> 1);
         if (sleep_mode) {
-            uint8_t r3c = analog_read(SYS_DEEP_ANA_REG);
-            analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r3c | 0x02u));
+            ANA_SYS_DEEP_SET(SYS_DEEP_SLEEP_FLAG);
         }
 
         analog_write(0x20, (uint8_t)(0x7fu - (uint8_t)__divsi3(0xfa00u + half_calib, (uint32_t)tick_32k_calib)));
@@ -322,8 +319,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     }
 
     if (sleep_mode) {
-        uint8_t r3c = analog_read(SYS_DEEP_ANA_REG);
-        analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r3c & 0xfdu));
+        ANA_SYS_DEEP_CLR(SYS_DEEP_SLEEP_FLAG);
         soft_reboot_dly13ms_use24mRC();
         reg_pwdn_ctrl = FLD_PWDN_CTRL_REBOOT;
     }

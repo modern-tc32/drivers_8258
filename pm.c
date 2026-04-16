@@ -337,8 +337,7 @@ void __attribute__((section(".text.cpu_wakeup_init"))) cpu_wakeup_init(void) {
     uint8_t v7f = analog_read(areg_pm_status);
     if ((v7f & 1u) != 0) {
         pmParam.mcu_status = 3;
-        uint8_t v3c = analog_read(SYS_DEEP_ANA_REG);
-        analog_write(SYS_DEEP_ANA_REG, (uint8_t)(v3c & 0xfdu));
+        ANA_SYS_DEEP_CLR(SYS_DEEP_SLEEP_FLAG); // clear
         if (pmParam.mcu_status > 1u) {
             reg_system_tick_ctrl = FLD_SYSTEM_TICK_START;
             pm_wait_xtal_ready();

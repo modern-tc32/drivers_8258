@@ -68,6 +68,8 @@
 #define SYS_NEED_REINIT_EXT32K			    BIT(0)
 #define SYS_DEEP_SLEEP_FLAG					BIT(1)
 
+#define ANA_SYS_DEEP_SET(x)    (analog_write(SYS_DEEP_ANA_REG, analog_read(SYS_DEEP_ANA_REG) | x))
+#define ANA_SYS_DEEP_CLR(x)    (analog_write(SYS_DEEP_ANA_REG, analog_read(SYS_DEEP_ANA_REG) & (~x)))
 
 //ana3c system used, user can not use
 #define SYS_DEEP_ANA_REG 					DEEP_ANA_REG2

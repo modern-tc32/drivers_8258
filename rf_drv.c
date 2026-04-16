@@ -29,26 +29,20 @@ void rf_set_channel(signed char chn, unsigned short option) {
     ch = (int16_t)(ch + 0x960);
 
     uint8_t vco_cap_step = 0;
-    if (ch <= 0x09f5) {
+    if (ch <= 0x094b) {
+        vco_cap_step = 24;
+    } else if (ch <= 0x0964) {
+        vco_cap_step = 28;
+    } else if (ch <= 0x0982) {
+        vco_cap_step = 20;
+    } else if (ch <= 0x09a0) {
+        vco_cap_step = 16;
+    } else if (ch <= 0x09be) {
+        vco_cap_step = 12;
+    } else if (ch <= 0x09d7) {
+        vco_cap_step = 8;
+    } else if (ch <= 0x09f5) {
         vco_cap_step = 4;
-        if (ch <= 0x09d7) {
-            vco_cap_step = 8;
-            if (ch <= 0x09be) {
-                vco_cap_step = 12;
-                if (ch <= 0x09a0) {
-                    vco_cap_step = 16;
-                    if (ch <= 0x0982) {
-                        vco_cap_step = 20;
-                        if (ch <= 0x0964) {
-                            vco_cap_step = 28;
-                            if (ch <= 0x094b) {
-                                vco_cap_step = 24;
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     uint32_t rf_chn_word = (uint32_t)((uint16_t)ch) << 17;

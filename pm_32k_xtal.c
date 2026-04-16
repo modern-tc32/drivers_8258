@@ -32,7 +32,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
 
     if (timer_wakeup) {
         uint32_t dt = wakeup_tick - start;
-        if (dt > (0xe0u << 24)) {
+        if (dt > 0xE0000000u) {  //BIT(31)+BIT(30)+BIT(19)   7/8 cycle of 32bit
             irq_restore(irq);
             return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
         }
@@ -46,10 +46,12 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
             }
         } else {
             analog_write(areg_wakeup_status, WAKEUP_STATUS_ALL);
-            while (((reg_system_tick - start) < dt) && ((analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL) == 0u)) {
-            }
+            uint8_t st;
+            do {
+                st = (uint8_t)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
+            } while (((reg_system_tick - start) < dt) && (st == 0u));
             irq_restore(irq);
-            return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
+            return (int)st;
         }
     }
 
@@ -184,12 +186,13 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
 }
 
 __attribute__((used, section(".text.pm_tim_recover_32k_xtal"))) unsigned int pm_tim_recover_32k_xtal(unsigned int tick_32k_now) {
+    uint32_t deepRet_tick;
     if (pm_long_suspend) {
-        uint32_t d = tick_32k_now - tick_32k_cur;
-        return tick_cur + (d >> 5) * CRYSTAL32768_TICK_PER_32CYCLE;
+        deepRet_tick = tick_cur + (uint32_t)(tick_32k_now - tick_32k_cur) / 32u * CRYSTAL32768_TICK_PER_32CYCLE;
+    } else {
+        deepRet_tick = tick_cur + (uint32_t)(tick_32k_now - tick_32k_cur) * CRYSTAL32768_TICK_PER_32CYCLE / 32u;
     }
-    uint32_t d = tick_32k_now - tick_32k_cur;
-    return tick_cur + (d * CRYSTAL32768_TICK_PER_32CYCLE) / 32u;
+    return deepRet_tick;
 }
 
 __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_long_sleep_wakeup_32k_xtal(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int wakeup_tick) {
@@ -204,10 +207,12 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
             analog_write(areg_wakeup_status, WAKEUP_STATUS_ALL);
             uint32_t t = ((wake_ticks << 5) - wake_ticks);
             uint32_t budget = ((((t << 6) - t) << 3) + wake_ticks) >> 5;
-            while (((reg_system_tick - start) < budget) && ((analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL) == 0u)) {
-            }
+            uint8_t st;
+            do {
+                st = (uint8_t)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
+            } while (((reg_system_tick - start) < budget) && (st == 0u));
             irq_restore(irq);
-            return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
+            return (int)st;
         }
     }
 

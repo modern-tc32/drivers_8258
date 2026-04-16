@@ -78,10 +78,11 @@ void __attribute__((section(".text.pm_set_wakeup_time_param"))) pm_set_wakeup_ti
     g_pm_early_wakeup_time_us.deep_ret = (uint16_t)(suspend_ret_delay + 100u);
     g_pm_early_wakeup_time_us.deep = (uint16_t)(deep_delay + 240u);
 
-    uint16_t earliest_wakeup = (g_pm_early_wakeup_time_us.deep < g_pm_early_wakeup_time_us.suspend)
-                                   ? g_pm_early_wakeup_time_us.deep
-                                   : g_pm_early_wakeup_time_us.suspend;
-    g_pm_early_wakeup_time_us.min = (uint16_t)(earliest_wakeup + 0x0190u);
+    if (g_pm_early_wakeup_time_us.deep < g_pm_early_wakeup_time_us.suspend) {
+        g_pm_early_wakeup_time_us.min = (uint16_t)(g_pm_early_wakeup_time_us.deep + 0x0190u);
+    } else {
+        g_pm_early_wakeup_time_us.min = (uint16_t)(g_pm_early_wakeup_time_us.suspend + 0x0190u);
+    }
 }
 
 void __attribute__((section(".text.pm_set_xtal_stable_timer_param"))) pm_set_xtal_stable_timer_param(uint32_t suspend_delay_us, uint32_t loopnum, uint32_t nopnum) {
@@ -92,10 +93,11 @@ void __attribute__((section(".text.pm_set_xtal_stable_timer_param"))) pm_set_xta
     uint16_t x = (uint16_t)(g_pm_r_delay_us.suspend_ret_r_delay_us + 0x00e6u + suspend_delay_us);
     g_pm_early_wakeup_time_us.suspend = x;
 
-    uint16_t earliest_wakeup = (g_pm_early_wakeup_time_us.deep < g_pm_early_wakeup_time_us.suspend)
-                                   ? g_pm_early_wakeup_time_us.deep
-                                   : g_pm_early_wakeup_time_us.suspend;
-    g_pm_early_wakeup_time_us.min = (uint16_t)(earliest_wakeup + 0x0190u);
+    if (g_pm_early_wakeup_time_us.deep < g_pm_early_wakeup_time_us.suspend) {
+        g_pm_early_wakeup_time_us.min = (uint16_t)(g_pm_early_wakeup_time_us.deep + 0x0190u);
+    } else {
+        g_pm_early_wakeup_time_us.min = (uint16_t)(g_pm_early_wakeup_time_us.suspend + 0x0190u);
+    }
 }
 
 void __attribute__((section(".text.bls_pm_registerFuncBeforeSuspend"))) bls_pm_registerFuncBeforeSuspend(suspend_handler_t cb) {

@@ -45,10 +45,12 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
             }
         } else {
             analog_write(areg_wakeup_status, WAKEUP_STATUS_ALL);
-            while (((reg_system_tick - t0) < dt) && ((analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL) == 0u)) {
-            }
+            uint8_t st;
+            do {
+                st = (uint8_t)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
+            } while (((reg_system_tick - t0) < dt) && (st == 0u));
             irq_restore(irq);
-            return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
+            return (int)st;
         }
     }
 
@@ -194,15 +196,13 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
 
 
 __attribute__((used, section(".text.pm_tim_recover_32k_rc"))) unsigned int pm_tim_recover_32k_rc(unsigned int tick_32k_now) {
-	unsigned int deepRet_tick;
-
-    if(pm_long_suspend){
-        deepRet_tick = tick_cur + (unsigned int)(tick_32k_now - tick_32k_cur) / 16 * tick_32k_calib;
+    uint32_t deepRet_tick;
+    if (pm_long_suspend) {
+        deepRet_tick = tick_cur + (uint32_t)(tick_32k_now - tick_32k_cur) / 16u * tick_32k_calib;
+    } else {
+        deepRet_tick = tick_cur + (uint32_t)(tick_32k_now - tick_32k_cur) * tick_32k_calib / 16u;
     }
-    else{
-        deepRet_tick = tick_cur + (unsigned int)(tick_32k_now - tick_32k_cur) * tick_32k_calib / 16;		// current clock
-    }
-	return deepRet_tick;
+    return deepRet_tick;
 }
 
 __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_wakeup(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int sleep_duration_us) {
@@ -217,10 +217,12 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
             analog_write(areg_wakeup_status, WAKEUP_STATUS_ALL);
             uint32_t t = ((sleep_duration_us << 5) - sleep_duration_us);
             uint32_t budget = (t << 2) + sleep_duration_us;
-            while (((reg_system_tick - start_tick) < budget) && ((analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL) == 0u)) {
-            }
+            uint8_t st;
+            do {
+                st = (uint8_t)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
+            } while (((reg_system_tick - start_tick) < budget) && (st == 0u));
             irq_restore(irq);
-            return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
+            return (int)st;
         }
     }
 

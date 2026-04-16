@@ -212,7 +212,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     uint32_t start_tick = reg_system_tick;
     uint16_t calib = REG_ADDR16(0x750);
     tick_32k_calib = calib;
-    uint8_t has_timer = (uint8_t)(wakeup_src & PM_WAKEUP_TIMER);
+    uint8_t has_timer = (uint8_t)((wakeup_src & PM_WAKEUP_TIMER) != 0);
 
     if (has_timer) {
         if (sleep_duration_us < 0x40u) {

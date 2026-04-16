@@ -206,7 +206,7 @@ __attribute__((used, section(".text.pm_tim_recover_32k_xtal"))) unsigned int pm_
 __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_long_sleep_wakeup_32k_xtal(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int wakeup_tick) {
     uint8_t irq = reg_irq_en;
     reg_irq_en = 0;
-    uint8_t wakeup_src_comparator = (uint8_t)(wakeup_src & PM_WAKEUP_COMPARATOR);
+    uint8_t wakeup_src_comparator = (uint8_t)((wakeup_src & PM_WAKEUP_COMPARATOR) != 0);
     uint32_t start = reg_system_tick;
     uint32_t wake_ticks = wakeup_tick;
     uint8_t timer_wakeup = (uint8_t)(wakeup_src & PM_WAKEUP_TIMER);
@@ -274,7 +274,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
     }
 
     if (sleep_mode == SUSPEND_MODE) {
-        analog_write(0x2c, (uint8_t)(0x80u | (wakeup_src_comparator ? 0x14u : 0x1du)));
+        analog_write(0x2c, (uint8_t)(0x80u | wakeup_src_comparator | 0x40u | (wakeup_src_comparator << 3)));
     } else {
         analog_write(0x2c, (uint8_t)(0x16u | mode2c));
     }

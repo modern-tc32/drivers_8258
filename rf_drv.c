@@ -94,15 +94,13 @@ void rf_set_channel(signed char chn, unsigned short option) {
 }
 
 void rf_set_power_level(RF_PowerTypeDef level) {
-    int8_t signed_level = (int8_t)level;
-    uint8_t lv = (uint8_t)level;
-    if (signed_level < 0) {
+    if ((int8_t)level < 0) {
         REG_ADDR8(0x1225) |= BIT(6);
     } else {
         REG_ADDR8(0x1225) &= (uint8_t)~BIT(6);
     }
 
-    uint8_t power_code = (uint8_t)(lv & 0x3fu);
+    uint8_t power_code = (uint8_t)(((uint8_t)level) & 0x3fu);
     uint32_t power_word = ((uint32_t)power_code) << 24;
 
     uint8_t rf_pa_ctrl0 = REG_ADDR8(0x1226);
@@ -150,7 +148,7 @@ int rf_trx_state_set(RF_StatusTypeDef state, signed char chn) {
         return -1;
     }
 
-    reg_rf_ll_cmd = 0x80;
+    STOP_RF_STATE_MACHINE;
     reg_rf_ll_ctrl_3 = 0x29;
     REG_ADDR8(0x428) &= (uint8_t)~BIT(0);
     reg_rf_ll_ctrl_0 &= (uint8_t)~(BIT(0) | BIT(4) | BIT(5));

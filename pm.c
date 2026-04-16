@@ -49,7 +49,7 @@ unsigned char pm_long_suspend;
 unsigned char tl_multi_addr;
 pm_tim_recover_handler_t pm_tim_recover = 0;
 cpu_pm_handler_t cpu_sleep_wakeup = 0;
-pm_para_t pmParam = {0, 0, 0};
+pm_para_t pmParam;
 
 extern void rc_24m_cal(void);
 extern void doubler_calibration(void);
@@ -60,27 +60,32 @@ extern void start_suspend(void);
 void soft_reboot_dly13ms_use24mRC(void);
 extern uint32_t __udivsi3(uint32_t a, uint32_t b);
 
+__attribute__((used, noinline, section(".text.irq_disable"))) static unsigned char irq_disable_pm(void) {
+    return irq_disable();
+}
+
 static uint32_t __attribute__((noinline, section(".text.clock_time"))) clock_time(void) {
     return reg_system_tick;
 }
 
 void __attribute__((section(".text.pm_set_wakeup_time_param"))) pm_set_wakeup_time_param(uint32_t us) {
-    volatile uint16_t *rd = (volatile uint16_t *)&g_pm_r_delay_us;
-    volatile uint16_t *ew = (volatile uint16_t *)&g_pm_early_wakeup_time_us;
+    uint16_t us16[2];
 
-    rd[0] = (uint16_t)us;
-    rd[1] = (uint16_t)(us >> 16);
+    us16[0] = (uint16_t)us;
+    us16[1] = (uint16_t)(us >> 16);
+    g_pm_r_delay_us.deep_r_delay_us = us16[0];
+    g_pm_r_delay_us.suspend_ret_r_delay_us = us16[1];
 
-    ew[0] = (uint16_t)(rd[1] + 0x00e6u + g_pm_suspend_delay_us);
-    ew[1] = (uint16_t)(rd[1] + 100u);
-    ew[2] = (uint16_t)(rd[0] + 240u);
+    g_pm_early_wakeup_time_us.suspend = (uint16_t)(us16[1] + 0x00e6u + g_pm_suspend_delay_us);
+    g_pm_early_wakeup_time_us.deep_ret = (uint16_t)(us16[1] + 100u);
+    g_pm_early_wakeup_time_us.deep = (uint16_t)(us16[0] + 240u);
 
-    uint16_t a = ew[2];
-    uint16_t b = ew[0];
+    uint16_t a = g_pm_early_wakeup_time_us.deep;
+    uint16_t b = g_pm_early_wakeup_time_us.suspend;
     if (a < b) {
-        ew[3] = (uint16_t)(a + 0x0190u);
+        g_pm_early_wakeup_time_us.min = (uint16_t)(a + 0x0190u);
     } else {
-        ew[3] = (uint16_t)(b + 0x0190u);
+        g_pm_early_wakeup_time_us.min = (uint16_t)(b + 0x0190u);
     }
 }
 
@@ -89,15 +94,15 @@ void __attribute__((section(".text.pm_set_xtal_stable_timer_param"))) pm_set_xta
     g_pm_xtal_stable_loopnum = loopnum;
     g_pm_suspend_delay_us = suspend_delay_us;
 
-    uint16_t x = (uint16_t)(((volatile uint16_t *)&g_pm_r_delay_us)[1] + 0x00e6u + suspend_delay_us);
-    ((volatile uint16_t *)&g_pm_early_wakeup_time_us)[0] = x;
+    uint16_t x = (uint16_t)(g_pm_r_delay_us.suspend_ret_r_delay_us + 0x00e6u + suspend_delay_us);
+    g_pm_early_wakeup_time_us.suspend = x;
 
-    uint16_t a = ((volatile uint16_t *)&g_pm_early_wakeup_time_us)[2];
-    uint16_t b = ((volatile uint16_t *)&g_pm_early_wakeup_time_us)[0];
+    uint16_t a = g_pm_early_wakeup_time_us.deep;
+    uint16_t b = g_pm_early_wakeup_time_us.suspend;
     if (a < b) {
-        ((volatile uint16_t *)&g_pm_early_wakeup_time_us)[3] = (uint16_t)(a + 0x0190u);
+        g_pm_early_wakeup_time_us.min = (uint16_t)(a + 0x0190u);
     } else {
-        ((volatile uint16_t *)&g_pm_early_wakeup_time_us)[3] = (uint16_t)(b + 0x0190u);
+        g_pm_early_wakeup_time_us.min = (uint16_t)(b + 0x0190u);
     }
 }
 
@@ -193,7 +198,7 @@ unsigned int __attribute__((section(".text.pm_get_32k_tick"))) pm_get_32k_tick(v
 }
 
 void __attribute__((section(".text.start_reboot"))) start_reboot(void) {
-    irq_disable();
+    irq_disable_pm();
     soft_reboot_dly13ms_use24mRC();
     reg_pwdn_ctrl = FLD_PWDN_CTRL_REBOOT;
     for (;;) {

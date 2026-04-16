@@ -32,9 +32,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
             return (int)(analog_read(0x44) & 0x0fu);
         }
 
-        uint16_t e6 = ((volatile uint8_t *)&g_pm_early_wakeup_time_us)[6] |
-                      ((uint16_t)((volatile uint8_t *)&g_pm_early_wakeup_time_us)[7] << 8);
-        if (dt >= ((uint32_t)e6 << 4)) {
+        if (dt >= ((uint32_t)g_pm_early_wakeup_time_us.min << 4)) {
             if (dt > 0x07feffffu) {
                 pm_long_suspend = 1;
             } else {
@@ -59,15 +57,11 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     tick_cur = reg_system_tick + (0x8cu << 2);
     tick_32k_cur = pm_get_32k_tick();
 
-    uint16_t e0 = ((volatile uint8_t *)&g_pm_early_wakeup_time_us)[0] |
-                  ((uint16_t)((volatile uint8_t *)&g_pm_early_wakeup_time_us)[1] << 8);
-    uint16_t e4 = ((volatile uint8_t *)&g_pm_early_wakeup_time_us)[4] |
-                  ((uint16_t)((volatile uint8_t *)&g_pm_early_wakeup_time_us)[5] << 8);
     uint32_t target;
     if (sleep_mode == DEEPSLEEP_MODE) {
-        target = wakeup_tick - ((uint32_t)e4 << 4);
+        target = wakeup_tick - ((uint32_t)g_pm_early_wakeup_time_us.deep << 4);
     } else {
-        target = wakeup_tick - ((uint32_t)e0 << 4);
+        target = wakeup_tick - ((uint32_t)g_pm_early_wakeup_time_us.suspend << 4);
     }
 
     analog_write(0x26, (uint8_t)wakeup_src);
@@ -118,9 +112,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
 
     analog_write(0x20, 0x77);
     {
-        uint16_t hi = ((volatile uint8_t *)&g_pm_r_delay_us)[2] |
-                      ((uint16_t)((volatile uint8_t *)&g_pm_r_delay_us)[3] << 8);
-        analog_write(0x1f, (uint8_t)__divsi3((((uint32_t)hi << 8) + XTAL_CALIB_OFFSET), XTAL_CALIB_SCALE));
+        analog_write(0x1f, (uint8_t)__divsi3((((uint32_t)g_pm_r_delay_us.suspend_ret_r_delay_us << 8) + XTAL_CALIB_OFFSET), XTAL_CALIB_SCALE));
     }
 
     {
@@ -303,9 +295,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
 
     analog_write(0x20, 0x77);
     {
-        uint16_t hi = ((volatile uint8_t *)&g_pm_r_delay_us)[2] |
-                      ((uint16_t)((volatile uint8_t *)&g_pm_r_delay_us)[3] << 8);
-        uint32_t t = ((uint32_t)hi << 8) + XTAL_CALIB_OFFSET;
+        uint32_t t = ((uint32_t)g_pm_r_delay_us.suspend_ret_r_delay_us << 8) + XTAL_CALIB_OFFSET;
         analog_write(0x1f, (uint8_t)__divsi3(t, XTAL_CALIB_SCALE));
     }
 

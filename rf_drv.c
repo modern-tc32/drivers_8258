@@ -176,14 +176,14 @@ __attribute__((section(".text.rf_trx_state_get"))) RF_StatusTypeDef rf_trx_state
 __attribute__((section(".text.rf_rx_buffer_set"))) void rf_rx_buffer_set(unsigned char *rf_rx_addr, int size, unsigned char pingpong_en) {
     uint8_t dma_mode = pingpong_en ? 3u : 1u;
     reg_dma_rf_rx_addr = (uint16_t)(uintptr_t)rf_rx_addr;
-    reg_dma_rf_rx_size = (uint8_t)(((unsigned int)size << 20) >> 24);
+    reg_dma_rf_rx_size = (uint8_t)(((unsigned int)size >> 4) & 0xffu);
     reg_dma_rf_rx_mode = dma_mode;
     g_RFRxPingpongEn = pingpong_en;
 }
 
 __attribute__((section(".text.rf_rx_cfg"))) void rf_rx_cfg(int size, unsigned char pingpong_en) {
     uint8_t dma_mode = pingpong_en ? 3u : 1u;
-    reg_dma_rf_rx_size = (uint8_t)(((unsigned int)size << 20) >> 24);
+    reg_dma_rf_rx_size = (uint8_t)(((unsigned int)size >> 4) & 0xffu);
     reg_dma_rf_rx_mode = dma_mode;
     g_RFRxPingpongEn = pingpong_en;
 }

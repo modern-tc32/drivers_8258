@@ -255,6 +255,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
         REG_ADDR8(0x63e) = tl_multi_addr;
         an7 = 5;
         mode2c = 0xde;
+        /* Branchless form of (sleep_mode != DEEPSLEEP_MODE): 0 or 1. */
         sleep_mode = (uint8_t)(((sleep_mode - DEEPSLEEP_MODE) | (uint8_t)(-(int8_t)(sleep_mode - DEEPSLEEP_MODE))) & 0xffu);
     } else if (sleep_mode == SUSPEND_MODE) {
         analog_write(0x04, 0x48);

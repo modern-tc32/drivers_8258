@@ -29,8 +29,8 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
             return (int)(analog_read(0x44) & 0x0fu);
         }
 
-        uint16_t ew6 = ((volatile uint8_t *)&g_pm_early_wakeup_time_us)[6] |
-                       ((uint16_t)((volatile uint8_t *)&g_pm_early_wakeup_time_us)[7] << 8);
+        /* Intentional: use struct fields (not byte-wise loads). Keep as-is. */
+        uint16_t ew6 = g_pm_early_wakeup_time_us.min;
         uint32_t ew = ((uint32_t)ew6 << 4);
 
         if (dt >= ew) {
@@ -58,10 +58,9 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     tick_cur = reg_system_tick + (0x8cu << 2);
     tick_32k_cur = pm_get_32k_tick();
 
-    uint16_t e0 = ((volatile uint8_t *)&g_pm_early_wakeup_time_us)[0] |
-                  ((uint16_t)((volatile uint8_t *)&g_pm_early_wakeup_time_us)[1] << 8);
-    uint16_t e2 = ((volatile uint8_t *)&g_pm_early_wakeup_time_us)[2] |
-                  ((uint16_t)((volatile uint8_t *)&g_pm_early_wakeup_time_us)[3] << 8);
+    /* Intentional: use struct fields for early-wakeup timings. */
+    uint16_t e0 = g_pm_early_wakeup_time_us.suspend;
+    uint16_t e2 = g_pm_early_wakeup_time_us.deep_ret;
     uint16_t early = sleep_mode_u8 ? e2 : e0;
     uint32_t target = wake_ticks - ((uint32_t)early << 4);
 

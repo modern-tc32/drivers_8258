@@ -4,6 +4,9 @@
 #include "include/pm.h"
 #include "include/analog.h"
 
+#define XTAL_CALIB_OFFSET 0x1E84
+#define XTAL_CALIB_SCALE 0x3D09
+
 extern uint32_t __divsi3(uint32_t a, uint32_t b);
 extern uint32_t __udivsi3(uint32_t a, uint32_t b);
 __attribute__((used, noinline)) static void switch_ext32kpad_to_int32krc(uint32_t mode);
@@ -117,16 +120,16 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     {
         uint16_t hi = ((volatile uint8_t *)&g_pm_r_delay_us)[2] |
                       ((uint16_t)((volatile uint8_t *)&g_pm_r_delay_us)[3] << 8);
-        analog_write(0x1f, (uint8_t)__divsi3((((uint32_t)hi << 8) + 0x1e84u), 0x3d09u));
+        analog_write(0x1f, (uint8_t)__divsi3((((uint32_t)hi << 8) + XTAL_CALIB_OFFSET), XTAL_CALIB_SCALE));
     }
 
     {
         uint32_t wake_tick;
         uint32_t d = target - tick_cur;
         if (pm_long_suspend != 0) {
-            wake_tick = target - (__udivsi3(d, 0x3d09u) << 5) + tick_32k_cur;
+            wake_tick = target - (__udivsi3(d, XTAL_CALIB_SCALE) << 5) + tick_32k_cur;
         } else {
-            wake_tick = target - __udivsi3((d << 5) + 0x1e84u, 0x3d09u) + tick_32k_cur;
+            wake_tick = target - __udivsi3((d << 5) + XTAL_CALIB_OFFSET, XTAL_CALIB_SCALE) + tick_32k_cur;
         }
         reg_system_tick_mode = 0x2c;
         REG_ADDR32(0x754) = wake_tick;
@@ -263,8 +266,8 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
         analog_write(0x2b, 0xde);
         sleep_mode_no_retention = 1;
         if (!timer_wakeup) {
-            uint8_t ab = (uint8_t)((irq | (uint8_t)(-((int8_t)irq))) & 0xffu);
-            switch_ext32kpad_to_int32krc((uint8_t)(ab | 0xc0u | (uint8_t)(ab << 3)));
+            uint8_t ab = irq != 0;
+            switch_ext32kpad_to_int32krc((uint8_t)(ab | 0xc0u | (ab << 3)));
             an7 = 5;
             mode2c = 0;
         } else {
@@ -274,7 +277,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
     }
 
     if (sleep_mode == SUSPEND_MODE) {
-        analog_write(0x2c, (uint8_t)(0x80u | wakeup_src_comparator | 0x40u | (wakeup_src_comparator << 3)));
+        analog_write(0x2c, (uint8_t)(0x80u | wakeup_src_comparator | PM_WAKEUP_TIMER | (wakeup_src_comparator << 3)));
     } else {
         analog_write(0x2c, (uint8_t)(0x16u | mode2c));
     }
@@ -300,17 +303,17 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
     {
         uint16_t hi = ((volatile uint8_t *)&g_pm_r_delay_us)[2] |
                       ((uint16_t)((volatile uint8_t *)&g_pm_r_delay_us)[3] << 8);
-        uint32_t t = ((uint32_t)hi << 8) + 0x1e84u;
-        analog_write(0x1f, (uint8_t)__divsi3(t, 0x3d09u));
+        uint32_t t = ((uint32_t)hi << 8) + XTAL_CALIB_OFFSET;
+        analog_write(0x1f, (uint8_t)__divsi3(t, XTAL_CALIB_SCALE));
     }
 
     {
         uint32_t wake_tick;
         uint32_t dt = reg_system_tick - start;
         if (pm_long_suspend != 0) {
-            wake_tick = wake_m64 + tick_cur - ((__udivsi3(dt, 0x3d09u)) << 5);
+            wake_tick = wake_m64 + tick_cur - ((__udivsi3(dt, XTAL_CALIB_SCALE)) << 5);
         } else {
-            wake_tick = wake_m64 + tick_cur - __udivsi3((dt << 5) + 0x1e84u, 0x3d09u);
+            wake_tick = wake_m64 + tick_cur - __udivsi3((dt << 5) + XTAL_CALIB_OFFSET, XTAL_CALIB_SCALE);
         }
 
         reg_system_tick_mode = 0x2c;

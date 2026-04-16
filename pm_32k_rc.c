@@ -8,11 +8,13 @@ extern uint32_t __divsi3(uint32_t a, uint32_t b);
 extern uint32_t __udivsi3(uint32_t a, uint32_t b);
 
 __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wakeup_32k_rc(SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int wakeup_tick) {
+    uint8_t sleep_mode_u8 = (uint8_t)sleep_mode;
+    uint8_t wakeup_src_u8 = (uint8_t)wakeup_src;
     uint8_t irq = reg_irq_en;
     reg_irq_en = 0;
     uint32_t wake_ticks = wakeup_tick;
 
-    uint8_t timer_wakeup = (uint8_t)(wakeup_src & PM_WAKEUP_TIMER);
+    uint8_t timer_wakeup = (uint8_t)(wakeup_src_u8 & PM_WAKEUP_TIMER);
 
     while (tick_32k_calib == 0) {
     }
@@ -60,20 +62,20 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
                   ((uint16_t)((volatile uint8_t *)&g_pm_early_wakeup_time_us)[1] << 8);
     uint16_t e2 = ((volatile uint8_t *)&g_pm_early_wakeup_time_us)[2] |
                   ((uint16_t)((volatile uint8_t *)&g_pm_early_wakeup_time_us)[3] << 8);
-    uint16_t early = sleep_mode ? e2 : e0;
+    uint16_t early = sleep_mode_u8 ? e2 : e0;
     uint32_t target = wake_ticks - ((uint32_t)early << 4);
 
-    analog_write(0x26, (uint8_t)wakeup_src);
+    analog_write(0x26, wakeup_src_u8);
     analog_write(0x44, 0x0f);
 
     uint8_t bak66 = reg_clk_sel;
     reg_clk_sel = 0;
 
-    uint8_t sleep_mode_no_retention = (uint8_t)(sleep_mode & DEEPSLEEP_RETENTION_FLAG);
+    uint8_t sleep_mode_no_retention = (uint8_t)(sleep_mode_u8 & DEEPSLEEP_RETENTION_FLAG);
     uint8_t analog7_mode = 0;
     uint8_t analog2c_high_bits = 0;
     uint8_t analog2b_value = 0xde;
-    uint8_t analog7e_value = (uint8_t)sleep_mode;
+    uint8_t analog7e_value = sleep_mode_u8;
 
     if (sleep_mode_no_retention != 0) {
         uint8_t t2 = analog_read(0x02);
@@ -81,7 +83,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         REG_ADDR8(0x63e) = tl_multi_addr;
         analog7_mode = 5;
         analog2c_high_bits = 0x40;
-    } else if (sleep_mode == SUSPEND_MODE) {
+    } else if (sleep_mode_u8 == SUSPEND_MODE) {
         analog_write(0x04, 0x48);
         analog_write(0x7e, 0x00);
         analog7_mode = 4;
@@ -95,7 +97,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     analog_write(0x7e, analog7e_value);
     analog_write(0x2b, analog2b_value);
 
-    uint8_t cmp = (wakeup_src & PM_WAKEUP_COMPARATOR) != 0;
+    uint8_t cmp = (wakeup_src_u8 & PM_WAKEUP_COMPARATOR) != 0;
     uint8_t any = cmp | timer_wakeup;
 
     analog_write(0x2c,
@@ -115,7 +117,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
 
     {
         uint32_t half = (uint32_t)(calib >> 1);
-        if (sleep_mode) {
+        if (sleep_mode_u8) {
             uint8_t r = analog_read(SYS_DEEP_ANA_REG);
             analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r | 0x02u));
             analog_write(0x20, (uint8_t)(0x7fu - (uint8_t)__divsi3(0xfa00u + half, (uint32_t)tick_32k_calib)));
@@ -154,7 +156,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         sleep_start();
     }
 
-    if (sleep_mode) {
+    if (sleep_mode_u8) {
         uint8_t r = analog_read(SYS_DEEP_ANA_REG);
         analog_write(SYS_DEEP_ANA_REG, (uint8_t)(r & 0xfdu));
         soft_reboot_dly13ms_use24mRC();
@@ -244,11 +246,11 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     uint8_t bak66 = reg_clk_sel;
     reg_clk_sel = 0;
 
-    uint8_t sm7 = (uint8_t)(sleep_mode & 0x7fu);
+    uint8_t sleep_mode_no_retention = (uint8_t)(sleep_mode & DEEPSLEEP_RETENTION_FLAG);
     uint8_t an7 = 0;
     uint8_t v2c_base = 0x16;
 
-    if (sm7 != 0) {
+    if (sleep_mode_no_retention != 0) {
         uint8_t t2 = analog_read(0x02);
         analog_write(0x02, (uint8_t)((t2 & (uint8_t)~0x07u) | 0x05u));
         REG_ADDR8(0x63e) = tl_multi_addr;
@@ -273,7 +275,7 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
 
     analog_write(0x07, (analog_read(0x07) & ~0x07) | an7);
 
-    if (sm7 == 0) {
+    if (sleep_mode_no_retention == 0) {
         REG_ADDR8(0x602) = 0x08;
         analog_write(0x7f, 0x01);
     } else {

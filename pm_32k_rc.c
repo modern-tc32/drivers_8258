@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "include/register.h"
+#include "include/clock.h"
 #ifndef SYS_DEEP_ANA_REG
 #define SYS_DEEP_ANA_REG 0x3c
 #endif
@@ -161,8 +162,8 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         reg_system_tick_mode = 0x2c;
         (*(volatile uint32_t *)(uintptr_t)0x00800754) = wake_tick;
         reg_system_tick_ctrl = 0x08;
-        for (volatile int i = 0; i < 16; ++i) {
-        }
+        CLOCK_DLY_10_CYC;
+        CLOCK_DLY_6_CYC;
         while (reg_system_tick_ctrl & 0x08u) {
         }
     }
@@ -190,11 +191,9 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     }
 
     reg_system_tick_mode = 0;
-    for (volatile int i = 0; i < 6; ++i) {
-    }
+    CLOCK_DLY_6_CYC;
     reg_system_tick_mode = 0x92;
-    for (volatile int i = 0; i < 4; ++i) {
-    }
+    CLOCK_DLY_4_CYC;
     reg_system_tick_ctrl = FLD_SYSTEM_TICK_START;
     pm_wait_xtal_ready();
 
@@ -337,8 +336,8 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
         reg_system_tick_mode = 0x2c;
         (*(volatile uint32_t *)(uintptr_t)0x00800754) = wake_tick;
         reg_system_tick_ctrl = 0x08;
-        for (volatile int i = 0; i < 16; ++i) {
-        }
+        CLOCK_DLY_10_CYC;
+        CLOCK_DLY_6_CYC;
         while (reg_system_tick_ctrl & 0x08u) {
         }
     }
@@ -366,11 +365,9 @@ __attribute__((used, section(".text.pm_long_sleep_wakeup"))) int pm_long_sleep_w
     }
 
     reg_system_tick_mode = 0x00;
-    for (volatile int i = 0; i < 6; ++i) {
-    }
+    CLOCK_DLY_6_CYC;
     reg_system_tick_mode = 0x90;
-    for (volatile int i = 0; i < 4; ++i) {
-    }
+    CLOCK_DLY_4_CYC;
     reg_system_tick_ctrl = FLD_SYSTEM_TICK_START;
     pm_wait_xtal_ready();
 

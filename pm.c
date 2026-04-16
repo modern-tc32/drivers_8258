@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "include/register.h"
+#include "include/clock.h"
 #include "include/irq.h"
 #include "include/pm.h"
 
@@ -137,8 +138,7 @@ void __attribute__((section(".ram_code"))) sleep_start(void) {
     reg_mspi_ctrl = 0;
     reg_mspi_data = 0xb9;
 
-    for (volatile uint32_t i = 0; i <= 1u; ++i) {
-    }
+    CLOCK_DLY_2_CYC;
 
     reg_mspi_ctrl = 1;
     reg_gpio_func_sel_pe = 0;
@@ -156,8 +156,7 @@ void __attribute__((section(".ram_code"))) sleep_start(void) {
     reg_mspi_ctrl = 0;
     reg_mspi_data = 0xab;
 
-    for (volatile uint32_t i = 0; i <= 1u; ++i) {
-    }
+    CLOCK_DLY_2_CYC;
 
     reg_mspi_ctrl = 1;
     analog_write(areg_pwdn_setting, 0x80);

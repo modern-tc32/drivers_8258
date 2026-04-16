@@ -222,37 +222,37 @@ void __attribute__((section(".text.pm_wait_xtal_ready"))) pm_wait_xtal_ready(voi
 void __attribute__((section(".text.cpu_stall_wakeup_by_timer0"))) cpu_stall_wakeup_by_timer0(unsigned int tick) {
     reg_tmr0_tick = 0;
     reg_tmr0_capt = tick;
-    reg_tmr_ctrl16 = (uint16_t)(reg_tmr_ctrl16 & (uint16_t)~FLD_TMR0_MODE);
-    reg_tmr_ctrl8 = (uint8_t)(reg_tmr_ctrl8 | FLD_TMR0_EN);
-    reg_mcu_wakeup_mask = reg_mcu_wakeup_mask | 0x01u;
+    reg_tmr_ctrl16 &= (uint16_t)~FLD_TMR0_MODE;
+    reg_tmr_ctrl8 |= FLD_TMR0_EN;
+    reg_mcu_wakeup_mask |= 0x01u;
     reg_tmr_sta = FLD_TMR_STA_TMR0;
     reg_pwdn_ctrl = FLD_PWDN_CTRL_SLEEP;
     reg_tmr_sta = FLD_TMR_STA_TMR0;
-    reg_tmr_ctrl8 = (uint8_t)(reg_tmr_ctrl8 & (uint8_t)~FLD_TMR0_EN);
+    reg_tmr_ctrl8 &= (uint8_t)~FLD_TMR0_EN;
 }
 
 void __attribute__((section(".text.cpu_stall_wakeup_by_timer1"))) cpu_stall_wakeup_by_timer1(unsigned int tick) {
     reg_tmr1_tick = 0;
     reg_tmr1_capt = tick;
-    reg_tmr0_capt = (uint16_t)(reg_tmr0_capt & (uint16_t)~0x0030u);
-    reg_tmr0_capt = (uint8_t)(reg_tmr0_capt | 0x08u);
-    reg_mcu_wakeup_mask = reg_mcu_wakeup_mask | 0x02u;
+    reg_tmr0_capt &= (uint16_t)~0x0030u;
+    reg_tmr0_capt |= 0x08u;
+    reg_mcu_wakeup_mask |= 0x02u;
     reg_tmr_sta = FLD_TMR_STA_TMR1;
     reg_pwdn_ctrl = FLD_PWDN_CTRL_SLEEP;
     reg_tmr_sta = FLD_TMR_STA_TMR1;
-    reg_tmr0_capt = (uint8_t)(reg_tmr0_capt & (uint8_t)~0x08u);
+    reg_tmr0_capt &= (uint8_t)~0x08u;
 }
 
 void __attribute__((section(".text.cpu_stall_wakeup_by_timer2"))) cpu_stall_wakeup_by_timer2(unsigned int tick) {
     reg_tmr2_tick = 0;
     reg_tmr2_capt = tick;
-    reg_tmr2_capt = (uint16_t)(reg_tmr2_capt & (uint16_t)~0x3f82u);
-    reg_tmr2_capt = (uint8_t)(reg_tmr2_capt | 0x40u);
-    reg_mcu_wakeup_mask = reg_mcu_wakeup_mask | 0x04u;
+    reg_tmr2_capt &= (uint16_t)~0x3f82u;
+    reg_tmr2_capt |= 0x40u;
+    reg_mcu_wakeup_mask |= 0x04u;
     reg_tmr_sta = FLD_TMR_STA_TMR2;
     reg_pwdn_ctrl = FLD_PWDN_CTRL_SLEEP;
     reg_tmr_sta = FLD_TMR_STA_TMR2;
-    reg_tmr2_capt = (uint8_t)(reg_tmr2_capt & (uint8_t)~0x40u);
+    reg_tmr2_capt &= (uint8_t)~0x40u;
 }
 
 unsigned int __attribute__((section(".text.cpu_stall"))) cpu_stall(int wakeup_src, unsigned int sleep_us, unsigned int tick_per_us) {
@@ -260,17 +260,17 @@ unsigned int __attribute__((section(".text.cpu_stall"))) cpu_stall(int wakeup_sr
         reg_tmr1_tick = 0;
         reg_tmr1_capt = sleep_us * tick_per_us;
         reg_tmr_sta = FLD_TMR_STA_TMR1;
-        reg_tmr_ctrl8 = (uint8_t)(reg_tmr_ctrl8 & (uint8_t)~FLD_TMR1_MODE);
-        reg_tmr_ctrl8 = (uint8_t)(reg_tmr_ctrl8 | FLD_TMR1_EN);
+        reg_tmr_ctrl8 &= (uint8_t)~FLD_TMR1_MODE;
+        reg_tmr_ctrl8 |= FLD_TMR1_EN;
     }
 
-    reg_mcu_wakeup_mask = reg_mcu_wakeup_mask | wakeup_src;
-    reg_irq_mask = reg_irq_mask & ~(FLD_IRQ_TMR1_EN | FLD_IRQ_ZB_RT_EN);
+    reg_mcu_wakeup_mask |= wakeup_src;
+    reg_irq_mask &= ~(FLD_IRQ_TMR1_EN | FLD_IRQ_ZB_RT_EN);
     reg_pwdn_ctrl = FLD_PWDN_CTRL_SLEEP;
 
     if (sleep_us != 0u) {
         reg_tmr1_tick = 0;
-        reg_tmr_ctrl8 = (uint8_t)(reg_tmr_ctrl8 & (uint8_t)~FLD_TMR1_EN);
+        reg_tmr_ctrl8 &= (uint8_t)~FLD_TMR1_EN;
     }
 
     (void)reg_pm_misc_dummy;
@@ -373,5 +373,5 @@ void __attribute__((section(".text.cpu_wakeup_init"))) cpu_wakeup_init(void) {
 
     reg_dma_chn_en = 0;
     reg_dma_chn_irq_msk = 0;
-    reg_gpio_wakeup_irq = (uint8_t)(reg_gpio_wakeup_irq | FLD_GPIO_CORE_WAKEUP_EN | FLD_GPIO_CORE_INTERRUPT_EN);
+    reg_gpio_wakeup_irq |= (FLD_GPIO_CORE_WAKEUP_EN | FLD_GPIO_CORE_INTERRUPT_EN);
 }

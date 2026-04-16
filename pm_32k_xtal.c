@@ -78,7 +78,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     uint8_t sleep_mode_no_retention = (uint8_t)(sleep_mode & DEEPSLEEP_RETENTION_FLAG);
     uint8_t analog7_mode = 0;
 
-    if (sleep_mode_no_retention != 0) {
+    if (sleep_mode_no_retention) {
         uint8_t t2 = analog_read(0x02);
         analog_write(0x02, (uint8_t)((t2 & (uint8_t)~0x07u) | 0x05u));
         REG_ADDR8(0x63e) = tl_multi_addr;
@@ -171,9 +171,9 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     }
 
     reg_system_tick_mode = 0;
-    CLOCK_DLY_6_CYC;
+    CLOCK_DLY_7_CYC;
     reg_system_tick_mode = 0x92;
-    CLOCK_DLY_5_CYC;
+    CLOCK_DLY_4_CYC;
     reg_system_tick_ctrl = FLD_SYSTEM_TICK_START;
     pm_wait_xtal_ready();
 
@@ -193,13 +193,14 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
 }
 
 __attribute__((used, section(".text.pm_tim_recover_32k_xtal"))) unsigned int pm_tim_recover_32k_xtal(unsigned int tick_32k_now) {
-    uint32_t d = tick_32k_now - tick_32k_cur;
     if (pm_long_suspend != 0) {
+        uint32_t d = tick_32k_now - tick_32k_cur;
         d >>= 5;
         uint32_t t = ((d << 5) - d);
         d = (((t << 6) - t) << 3) + d;
         return d + tick_cur;
     }
+    uint32_t d = tick_32k_now - tick_32k_cur;
     uint32_t t = ((d << 5) - d);
     d = (((t << 6) - t) << 3) + d;
     d >>= 5;

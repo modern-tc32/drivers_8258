@@ -337,6 +337,7 @@ void __attribute__((section(".text.cpu_wakeup_init"))) cpu_wakeup_init(void) {
             pm_wait_xtal_ready();
             cpu_wakeup_no_deepretn_back_init();
         } else {
+            /* very odd branch, it is unreachable. Looks like a typo in the code */
             pmParam.mcu_status = MCU_STATUS_BOOT;
         }
     } else {
@@ -344,8 +345,7 @@ void __attribute__((section(".text.cpu_wakeup_init"))) cpu_wakeup_init(void) {
     }
 
     pmParam.wakeup_src = analog_read(areg_wakeup_src);
-    uint8_t ws = (uint8_t)(pmParam.wakeup_src & WAKEUP_STATUS_TIMER_PAD);
-    pmParam.is_pad_wakeup = (uint8_t)(ws == WAKEUP_STATUS_PAD);
+    pmParam.is_pad_wakeup = (uint8_t)((pmParam.wakeup_src & WAKEUP_STATUS_TIMER_PAD) == WAKEUP_STATUS_PAD);
 
     if (pmParam.mcu_status == MCU_STATUS_DEEPRET_BACK) {
         uint32_t t = pm_get_32k_tick();

@@ -26,7 +26,7 @@
 #pragma once
 
 
-#define 	_ASM_NOP_			asm("tnop")
+#define 	_ASM_NOP_			asm("nop")
 
 /**
  * @brief  instruction delay.

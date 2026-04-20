@@ -39,9 +39,9 @@ int LoadTblCmdSet(const TBLCMDSET * pt, int size)
 	int l=0;
 
 	while (l<size) {
-		unsigned int  cadr = ((unsigned int)0x800000) | pt[l].ADR;
-		unsigned char cdat = pt[l].DAT;
-		unsigned char ccmd = pt[l].CMD;
+		unsigned int  cadr = ((unsigned int)0x800000) | pt[l].adr;
+		unsigned char cdat = pt[l].dat;
+		unsigned char ccmd = pt[l].cmd;
 		unsigned char cvld =(ccmd & TCMD_UNDER_WR);
 		ccmd &= TCMD_MASK;
 		if (cvld) {
@@ -52,7 +52,7 @@ int LoadTblCmdSet(const TBLCMDSET * pt, int size)
 				analog_write (cadr, cdat);
 			}
 			else if (ccmd == TCMD_WAIT) {
-				sleep_us(pt[l].ADR*256 + cdat);
+				sleep_us(pt[l].adr*256 + cdat);
 			}
 		}
 		l++;

@@ -277,6 +277,24 @@ void timer2_set_mode(TIMER_ModeTypeDef mode,unsigned int init_tick, unsigned int
 		default: break;
 	}
 }
+
+void timer_set_mode(TIMER_TypeDef type, TIMER_ModeTypeDef mode)
+{
+	switch(type)
+	{
+		case TIMER0:
+			timer0_set_mode(mode, 0, 0);
+			break;
+		case TIMER1:
+			timer1_set_mode(mode, 0, 0);
+			break;
+		case TIMER2:
+			timer2_set_mode(mode, 0, 0);
+			break;
+		default:
+			break;
+	}
+}
 /**
  * @brief     the specified timer start working.
  * @param[in] type - select the timer to start.
@@ -321,5 +339,4 @@ void timer_stop(TIMER_TypeDef type)
 			break;
 	}
 }
-
 

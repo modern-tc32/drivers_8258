@@ -35,12 +35,12 @@
 #define areg_32k_tick_2              0x42
 #define areg_32k_tick_3              0x43
 
-unsigned char tl_24mrc_cal = 0;
-volatile pm_r_delay_us_s g_pm_r_delay_us = {0, 0};
-volatile uint32_t g_pm_suspend_delay_us = 0;
-volatile pm_early_wakeup_time_us_s g_pm_early_wakeup_time_us = {0, 0, 0, 0};
-volatile uint32_t g_pm_xtal_stable_loopnum = 0;
-volatile uint32_t g_pm_xtal_stable_suspend_nopnum = 0;
+unsigned char tl_24mrc_cal = 0x80;
+volatile pm_r_delay_us_s g_pm_r_delay_us = {1000, 1000};
+volatile uint32_t g_pm_suspend_delay_us = 0x87;
+volatile pm_early_wakeup_time_us_s g_pm_early_wakeup_time_us = {0x0555, 0x044c, 0x04d8, 0x06e5};
+volatile uint32_t g_pm_xtal_stable_loopnum = 10;
+volatile uint32_t g_pm_xtal_stable_suspend_nopnum = 200;
 suspend_handler_t func_before_suspend = (suspend_handler_t)0;
 
 unsigned int tick_cur;

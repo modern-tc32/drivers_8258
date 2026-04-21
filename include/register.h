@@ -819,6 +819,8 @@ enum{
 #define reg_system_wakeup_tick	REG_ADDR32(0x748)
 #define reg_system_tick_mode	REG_ADDR8(0x74c)
 #define reg_system_tick_ctrl	REG_ADDR8(0x74f)
+#define reg_system_32k_tick_rd	REG_ADDR16(0x750)
+#define reg_system_32k_tick_cal	REG_ADDR32(0x754)
 
 enum {
 	FLD_SYSTEM_TICK_START	=		BIT(0),

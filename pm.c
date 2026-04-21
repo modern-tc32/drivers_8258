@@ -16,7 +16,6 @@
 #define reg_dma_addrhi0_3            REG_ADDR32(0xc40)
 #define reg_dma_addrhi4_7            REG_ADDR32(0xc44)
 #define reg_dma_addrhi8              REG_ADDR8(0xc48)
-#define reg_gpio_table_reset         REG_ADDR16(0x750)
 #define PM_RET_ENTRY_BASE            0x00840058u
 
 #define areg_pwdn_setting            0x34
@@ -320,7 +319,7 @@ void __attribute__((section(".text.cpu_wakeup_init"))) cpu_wakeup_init(void) {
     reg_dma_addrhi0_3 = 0x04040404u;
     reg_dma_addrhi4_7 = 0x04040404u;
     reg_dma_addrhi8 = 4;
-    reg_gpio_table_reset = 0;
+    reg_system_32k_tick_rd = 0;
 
     if (reg_sram_shutdown_sel == 1) {
         analog_write(areg_dig_ldo_cap, 0x3c);

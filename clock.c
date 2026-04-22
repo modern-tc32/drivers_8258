@@ -126,6 +126,47 @@ void clock_32k_init (CLK_32K_TypeDef src)
 	}
 }
 
+static _attribute_no_inline_ void pwm_kick_32k_pad(void)
+{
+	reg_clk_sel = 0x43;
+	reg_gpio_pc_gpio = 0xf7;
+	reg_pwm_cycle(1) = 0x00020001;
+	reg_pwm_enable = 0x02;
+	reg_pwm_clk = 0xf3;
+	sleep_us(10000);
+	reg_clk_sel = 0x06;
+	reg_gpio_pc_gpio = 0xff;
+	reg_pwm_cycle(1) = 0x00000000;
+	reg_pwm_enable = 0x00;
+	reg_pwm_clk = 0x00;
+}
+
+void pwm_kick_32k_pad_times(unsigned int times)
+{
+	unsigned int i;
+
+	if (!times) {
+		return;
+	}
+
+	analog_write(0x2d, 0x95);
+	analog_write(0x05, 0x00);
+
+	for (i = 0; i < times; ++i) {
+		unsigned int last_32k_tick;
+		unsigned int curr_32k_tick;
+
+		pwm_kick_32k_pad();
+		last_32k_tick = pm_get_32k_tick();
+		sleep_us(305);
+		curr_32k_tick = pm_get_32k_tick();
+
+		if (last_32k_tick != curr_32k_tick) {
+			break;
+		}
+	}
+}
+
 /**
  * @brief     This function performs to select 48M RC as the system clock source.
  * @param[in] none.

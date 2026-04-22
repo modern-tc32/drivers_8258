@@ -85,7 +85,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_xtal"))) int cpu_sleep_
     if (sleep_mode_no_retention) {
         uint8_t t2 = analog_read(0x02);
         analog_write(0x02, (uint8_t)((t2 & (uint8_t)~0x07u) | 0x05u));
-        REG_ADDR8(0x63e) = tl_multi_addr;
+        tl_multi_addr = REG_ADDR8(0x63e);
         analog_write(0x7e, (uint8_t)sleep_mode);
         analog_write(0x2b, 0xde);
         analog7_mode = 5;
@@ -241,7 +241,7 @@ __attribute__((used, section(".text.cpu_long_sleep_wakeup_32k_xtal"))) int cpu_l
     if (sleep_mode_no_retention) {
         uint8_t t2 = analog_read(0x02);
         analog_write(0x02, (uint8_t)((t2 & (uint8_t)~0x07u) | 0x05u));
-        REG_ADDR8(0x63e) = tl_multi_addr;
+        tl_multi_addr = REG_ADDR8(0x63e);
         an7 = 5;
         mode2c = 0xde;
         /* Branchless form of (sleep_mode != DEEPSLEEP_MODE): 0 or 1. */

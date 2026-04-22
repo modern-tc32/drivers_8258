@@ -31,21 +31,20 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
         calib = reg_system_32k_tick_rd;
     } while (calib == 0u);
     tick_32k_calib = calib;
-    uint32_t t0 = reg_system_tick;
+    uint32_t t0 = clock_time();
 
     if (timer_wakeup) {
-        uint32_t dt = wake_ticks - t0;
-        if (dt > 0xE0000000){ //BIT(31)+BIT(30)+BIT(19)   7/8 cycle of 32bit, 268.44*7/8 = 234.88 S
+        uint32_t span = wake_ticks - t0;
+        if (span > 0xE0000000){ //BIT(31)+BIT(30)+BIT(19)   7/8 cycle of 32bit, 268.44*7/8 = 234.88 S
             irq_restore(irq);
             return (int)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
         }
 
         /* Intentional: use struct fields (not byte-wise loads). Keep as-is. */
         uint16_t min_wakeup_us = g_pm_early_wakeup_time_us.min;
-        uint32_t ew = ((uint32_t)min_wakeup_us << 4);
 
-        if (dt >= ew) {
-            if (dt > (0xffu << 20)) {
+        if (span >= ((uint32_t)min_wakeup_us * CLOCK_16M_SYS_TIMER_CLK_1US)) {
+            if (span > (0xffu << 20)) {
                 pm_long_suspend = 1;
             } else {
                 pm_long_suspend = 0;
@@ -55,7 +54,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
             uint8_t st;
             do {
                 st = (uint8_t)(analog_read(areg_wakeup_status) & WAKEUP_STATUS_ALL);
-            } while (((reg_system_tick - t0) < dt) && (st == 0u));
+            } while (((clock_time() - t0) < span) && !st);
             irq_restore(irq);
             return (int)st;
         }
@@ -74,18 +73,15 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
     tick_32k_cur = pm_get_32k_tick();
 
     /* Intentional: use struct fields for early-wakeup timings. */
-    uint16_t suspend_early_wakeup_us = g_pm_early_wakeup_time_us.suspend;
-    uint16_t deep_ret_early_wakeup_us = g_pm_early_wakeup_time_us.deep_ret;
-    uint16_t deep_early_wakeup_us = g_pm_early_wakeup_time_us.deep;
-    uint16_t early;
+    uint16_t earlyWakeup_us;
     if (sleep_mode == DEEPSLEEP_MODE) {
-        early = deep_early_wakeup_us;
+        earlyWakeup_us = g_pm_early_wakeup_time_us.deep;
     } else if (sleep_mode_retention) {
-        early = deep_ret_early_wakeup_us;
+        earlyWakeup_us = g_pm_early_wakeup_time_us.deep_ret;
     } else {
-        early = suspend_early_wakeup_us;
+        earlyWakeup_us = g_pm_early_wakeup_time_us.suspend;
     }
-    uint32_t target = wake_ticks - ((uint32_t)early << 4);
+    uint32_t tick_wakeup_reset = wake_ticks - ((uint32_t)earlyWakeup_us * CLOCK_16M_SYS_TIMER_CLK_1US);
 
     analog_write(0x26, (uint8_t) wakeup_src);
     analog_write(areg_wakeup_status, WAKEUP_STATUS_ALL);
@@ -160,7 +156,7 @@ __attribute__((used, section(".text.cpu_sleep_wakeup_32k_rc"))) int cpu_sleep_wa
 
     {
         uint32_t wake_tick;
-        uint32_t d = target - tick_cur;
+        uint32_t d = tick_wakeup_reset - tick_cur;
         if (pm_long_suspend) {
             wake_tick = (__udivsi3(d, (uint32_t)tick_32k_calib) << 4) + tick_32k_cur;
         } else {

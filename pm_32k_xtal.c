@@ -12,7 +12,6 @@
 //register, the conversion error(use 32k:16 cycle, count 16M sys tmr's ticks), at least the introduction of 64ppm.
 #define CRYSTAL32768_TICK_PER_32CYCLE		15625  // 7812.5 * 2
 
-#define areg_wakeup_status 0x44
 #define WAKEUP_STATUS_ALL (WAKEUP_STATUS_COMPARATOR | WAKEUP_STATUS_TIMER_CORE | WAKEUP_STATUS_PAD)
 extern uint32_t __divsi3(uint32_t a, uint32_t b);
 extern uint32_t __udivsi3(uint32_t a, uint32_t b);

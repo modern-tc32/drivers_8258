@@ -1348,10 +1348,34 @@ enum
 
 /*******************************      analog registers(3v3): 0x00      ***************************/
 
+#define areg_dig_ldo_cap			0x01
+#define areg_clk_2m_rc				0x02
+#define areg_pwdn_setting1			0x05
+enum {
+	FLDA_32K_RC_PWDN = 			BIT(0),
+	FLDA_32K_XTAL_PWDN =		BIT(1),
+	FLDA_32M_RC_PWDN = 			BIT(2),
+	FLDA_32M_XTAL_PWDN = 		BIT(3),
+	FLDA_LDO_PWDN = 			BIT(4),
+	FLDA_BGIREF_3V_PWDN = 		BIT(5),
+	FLDA_COMP_PWDN = 			BIT(6),
+	FLDA_TEMPSEN_PWDN = 		BIT(7),
+};
+
 #define areg_06_pll_bg			        0x06
 enum{
 	FLD_PLL_BG_POWER_DOWN = BIT(4),      //    	1: Power down;     0: Power up
 };
+
+#define areg_ldo_setting1			0x07
+enum {
+	FLDA_RX_ANA_LDO_O_CTRL = 	BIT_RNG(0,1),
+	FLDA_RX_RF_LDO_O_CTRL = 	BIT_RNG(2,3),
+	FLDA_PLL_LDO_B2 = 			BIT_RNG(4,5),
+	FLDA_PLL_LDO_DS = 			BIT_RNG(6,7),
+};
+
+#define areg_dcdc_ctrl				0x0b
 
 #define areg_0e_pa0_pa3_pull			0x0E
 #define areg_0f_pa4_pa7_pull			0x0F
@@ -1361,6 +1385,18 @@ enum{
 #define areg_13_pc4_pc7_pull			0x13
 #define areg_14_pd0_pd3_pull			0x14
 #define areg_15_pd4_pd7_pull			0x15
+
+#define areg_gpio_wakeup_en_pa		0x27
+#define areg_gpio_wakeup_en_pb		0x28
+#define areg_gpio_wakeup_en_pc		0x29
+#define areg_gpio_wakeup_en_pd		0x2a
+#define areg_pwdn_setting			0x34
+#define areg_32k_tick_0				0x40
+#define areg_32k_tick_1				0x41
+#define areg_32k_tick_2				0x42
+#define areg_32k_tick_3				0x43
+#define areg_wakeup_status			0x44
+#define areg_pm_status				0x7F
 
 /*******************************      analog registers(1v8): 0x80      ***************************/
 #define areg_clk_setting				0x82
@@ -1379,10 +1415,8 @@ enum{
 	FLD_XO_CAP_OFF_ANA  = BIT(7),
 };
 
+#define areg_ldo_trim				0x8c
+
 #if defined(__cplusplus)
 }
 #endif
-
-
-
-

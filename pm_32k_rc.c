@@ -6,7 +6,6 @@
 #include "include/timer.h"
 #include "include/irq.h"
 
-#define areg_wakeup_status 0x44
 #define WAKEUP_STATUS_ALL (WAKEUP_STATUS_COMPARATOR | WAKEUP_STATUS_TIMER_CORE | WAKEUP_STATUS_PAD)
 
 #ifndef ANA_SYS_DEEP_SET

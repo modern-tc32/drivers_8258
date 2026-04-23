@@ -18,22 +18,6 @@
 #define reg_dma_addrhi8              REG_ADDR8(0xc48)
 #define PM_RET_ENTRY_BASE            0x00840058u
 
-#define areg_pwdn_setting            0x34
-#define areg_dcdc_ctrl               0x0b
-#define areg_ldo_trim                0x8c
-#define areg_clk_2m_rc               0x02
-#define areg_gpio_wakeup_en_pa       0x27
-#define areg_gpio_wakeup_en_pb       0x28
-#define areg_gpio_wakeup_en_pc       0x29
-#define areg_gpio_wakeup_en_pd       0x2a
-#define areg_dig_ldo_cap             0x01
-#define areg_pm_status               0x7f
-#define areg_wakeup_src              0x44
-#define areg_32k_tick_0              0x40
-#define areg_32k_tick_1              0x41
-#define areg_32k_tick_2              0x42
-#define areg_32k_tick_3              0x43
-
 unsigned char tl_24mrc_cal = 0x80;
 volatile pm_r_delay_us_s g_pm_r_delay_us = {1000, 1000};
 volatile uint32_t g_pm_suspend_delay_us = 0x87;
@@ -343,7 +327,7 @@ void __attribute__((section(".text.cpu_wakeup_init"))) cpu_wakeup_init(void) {
         pmParam.mcu_status = MCU_STATUS_DEEPRET_BACK;
     }
 
-    pmParam.wakeup_src = analog_read(areg_wakeup_src);
+    pmParam.wakeup_src = analog_read(areg_wakeup_status);
     pmParam.is_pad_wakeup = (uint8_t)((pmParam.wakeup_src & WAKEUP_STATUS_TIMER_PAD) == WAKEUP_STATUS_PAD);
 
     if (pmParam.mcu_status == MCU_STATUS_DEEPRET_BACK) {

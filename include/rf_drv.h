@@ -127,7 +127,7 @@ typedef enum {
 
 } RF_PowerTypeDef;
 
-extern const RF_PowerTypeDef rf_power_Level_list[60];
+extern const unsigned char rf_power_Level_list[60];
 /**
  *  @brief  Define power index list of RF
  */
